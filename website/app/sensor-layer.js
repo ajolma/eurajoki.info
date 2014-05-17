@@ -5,8 +5,8 @@ var selectControl;
 var hoverControl;
 var hoverControl2;
 var syncing = false;
-var selected_variables = null;
-var selected_locations = null;
+var selected_variables = {};
+var selected_locations = {};
 
 MyStyle = function(color,graphic) {
     this.fillOpacity = 0.2;
@@ -234,12 +234,8 @@ function mittaritLayer(layers) {
     });
 
     mittarit.events.on({
-        featureselected: function(feature) {
-            feature_selection_event();
-        },
-        featureunselected: function(feature) {
-            feature_selection_event();
-        }
+        featureselected: feature_selection_event,
+        featureunselected: feature_selection_event
     });
 
     layers.push(mittarit);
@@ -247,13 +243,9 @@ function mittaritLayer(layers) {
 
 function createControlsForMittarit(map) {
     selectControl = new OpenLayers.Control.SelectFeature(mittarit, {
-        onSelect: feature_selection_event(),
-        onUnselect: feature_selection_event(),
-        clickout: true,
+        clickout: false,
         toggle: true,
-        multiple: true,
-        toggleKey: "ctrlKey", // ctrl key removes from selection
-        multipleKey: "shiftKey" // shift key adds to selection
+        multiple: true
     });
     
     hoverControl = new OpenLayers.Control.SelectFeature(mittarit, {

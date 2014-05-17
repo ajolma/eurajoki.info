@@ -1,18 +1,20 @@
+var numZoomLevels = 20;
+
 function taustakartat() {
     var osm = new OpenLayers.Layer.OSM("OpenStreetMap");
     
     var gs = new OpenLayers.Layer.Google("Google Kartta", {
-        numZoomLevels: 19
+        numZoomLevels: numZoomLevels
     });
 
     var gphy = new OpenLayers.Layer.Google("Google Maasto", {
         type: google.maps.MapTypeId.TERRAIN,
-        numZoomLevels: 19
+        numZoomLevels: numZoomLevels
     });
     
     var gi = new OpenLayers.Layer.Google("Google Satelliitti", {
         type: google.maps.MapTypeId.HYBRID,
-        numZoomLevels: 19
+        numZoomLevels: numZoomLevels
     });
 
     OpenLayers.Layer.MML = OpenLayers.Class(
@@ -42,7 +44,7 @@ function taustakartat() {
         "http://tile1.kartat.kapsi.fi/1.0.0/taustakartta/${z}/${x}/${y}.png",
         "http://tile2.kartat.kapsi.fi/1.0.0/taustakartta/${z}/${x}/${y}.png"
     ], {
-        numZoomLevels: 19,
+        numZoomLevels: numZoomLevels,
         sphericalMecator: true,
         transitionEffect: 'resize'
     });
@@ -51,7 +53,7 @@ function taustakartat() {
         "http://tile1.kartat.kapsi.fi/1.0.0/peruskartta/${z}/${x}/${y}.png",
         "http://tile2.kartat.kapsi.fi/1.0.0/peruskartta/${z}/${x}/${y}.png"
     ], {
-        numZoomLevels: 19,
+        numZoomLevels: numZoomLevels,
         sphericalMecator: true,
         transitionEffect: 'resize'
     });
@@ -60,7 +62,7 @@ function taustakartat() {
         "http://tile1.kartat.kapsi.fi/1.0.0/ortokuva/${z}/${x}/${y}.png",
         "http://tile2.kartat.kapsi.fi/1.0.0/ortokuva/${z}/${x}/${y}.png"
     ], {
-        numZoomLevels: 19,
+        numZoomLevels: numZoomLevels,
         sphericalMecator: true,
         transitionEffect: 'resize'
     });

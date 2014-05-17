@@ -5,7 +5,8 @@ function map() {
         controls: [
             new OpenLayers.Control.Navigation(),
             new OpenLayers.Control.PanZoomBar(),
-            new OpenLayers.Control.LayerSwitcher({ 'ascending': false }),
+            new OpenLayers.Control.LayerSwitcher({ ascending: false, 
+                                                   title: 'Kartta-aineistot' }),
             new OpenLayers.Control.Permalink(),
             new OpenLayers.Control.ScaleLine({ geodesic: true }),
             new OpenLayers.Control.Permalink('permalink'),

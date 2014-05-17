@@ -56,8 +56,8 @@ OpenLayers.Control.OverFeature = OpenLayers.Class(OpenLayers.Control, {
         feature.popup = popup;
         lastFeature = feature;
         map.addPopup(popup);
-    },                    
+    },
     out: function(feature) {
         //clearPopup();
-    }        
+    }
 });

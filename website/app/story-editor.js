@@ -1,8 +1,10 @@
 var storiesLayer = null;
 var saveStrategy;
-var wfs_server = 'http://54.247.187.88/Eurajoki/wfs.pl';
-var story_server = 'http://54.247.187.88/Eurajoki/stories.pl';
-var picture_server = 'http://54.247.187.88/Eurajoki/files.pl';
+//var server = '54.247.187.88';
+var server = 'localhost';
+var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
+var story_server = 'http://'+server+'/Eurajoki/stories.pl';
+var picture_server = 'http://'+server+'/Eurajoki/files.pl';
 var lastFeature = null;
 var drawControls = null;
 

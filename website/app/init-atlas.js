@@ -12,4 +12,7 @@ function init() {
     
     map.addLayers(overlayers);
 
+    var sw = map.getControl("OpenLayers_Control_LayerSwitcher_4");
+    sw.maximizeControl();
+
 }

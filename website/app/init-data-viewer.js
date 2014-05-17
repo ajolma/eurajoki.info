@@ -1,6 +1,8 @@
 var map;
-var wfs_server = 'http://54.247.187.88/Eurajoki/wfs.pl';
-var sos_server = 'http://54.247.187.88/Eurajoki/m5json.pl?raaka='+raaka+'&';
+var server = '54.247.187.88';
+//var server = 'localhost';
+var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
+var sos_server = 'http://'+server+'/Eurajoki/m5json.pl?raaka='+raaka+'&';
 
 function init() {
 
@@ -23,7 +25,10 @@ $(function() {
     function onDatasetsReceived(param) {
         datasets = param;
         $.each(datasets, function(i, dataset) {
-            $("#location").append('<option value="'+dataset.koodi+'">'+dataset.nimike+'</option>');
+            var html = '<option value="'+dataset.koodi+'"';
+            if (locs[dataset.koodi]) html += ' selected';
+            html += '>'+dataset.nimike+'</option>';
+            $("#location").append(html);
         });
     }
     
@@ -37,7 +42,10 @@ $(function() {
     function onVariablesReceived(param) {
         variables = param;
         $.each(variables, function(i, variable) {
-            $("#variable").append('<option value="'+variable.suure+'">'+variable.nimi+'</option>');
+            var html = '<option value="'+variable.suure+'"';
+            if (vars[variable.suure]) html += ' selected';
+            html += '>'+variable.nimi+'</option>';
+            $("#variable").append(html);
         });
     }
     
@@ -55,11 +63,19 @@ $(function() {
     $("#endDate").datepicker();
     $("#endDate").datepicker("option", "dateFormat", "yy-mm-dd");
     $("#endDate").val(year+'-'+mon+'-'+day);
+    if (date1) {
+        var d = date1.split("-");
+        $("#endDate").val(d[0]+'-'+d[1]+'-'+d[2]);
+    }
     
     $("#beginDate").datepicker();
     $("#beginDate").datepicker("option", "dateFormat", "yy-mm-dd");
     mon--;if (mon < 1) {mon = 12;year--;}
     $("#beginDate").val(year+'-'+mon+'-'+day);
+    if (date0) {
+        var d = date0.split("-");
+        $("#beginDate").val(d[0]+'-'+d[1]+'-'+d[2]);
+    }
     
     $("#plot").click(function() {
 
@@ -94,10 +110,7 @@ $(function() {
             });
         }
         
-        var get = sos_server+'request=GetDataset'+'&max=5000'+
-            '&from='+$("#beginDate").val()+
-            '&to='+$("#endDate").val();
-
+        var get = 'from='+$("#beginDate").val()+'&to='+$("#endDate").val();
         selected_variables.each(function() {
             var v = $(this).val();
             v = v.replace("+","%2B");
@@ -106,10 +119,13 @@ $(function() {
         $("#location :selected").each(function() {
             get += '&paikka='+$(this).val();
         });
-        $("#data_link").html('<a href="'+get+'" target="_blank">data</a>');
+        var data_get = sos_server+'request=GetDataset'+'&max=5000&'+get;
+        var page_get = '/data.php?'+get; // TÄHÄN TARVII []:t (fucking php)
+        $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
+        $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a>');
 
         $.ajax({
-            url: get,
+            url: data_get,
             type: "GET",
             dataType: "json",
             success: onDatasetReceived
