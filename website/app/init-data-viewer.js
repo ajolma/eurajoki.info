@@ -3,6 +3,7 @@ var server = '54.247.187.88';
 //var server = 'localhost';
 var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
 var sos_server = 'http://'+server+'/Eurajoki/m5json.pl?raaka='+raaka+'&';
+var auto_plot = 0;
 
 function init() {
 
@@ -20,34 +21,104 @@ function init() {
 
 }
 
-$(function() {
+function onDatasetsReceived(param) {
+    datasets = param;
+    $.each(datasets, function(i, dataset) {
+        var html = '<option value="'+dataset.koodi+'"';
+        if (locs[dataset.koodi]) html += ' selected';
+        html += '>'+dataset.nimike+'</option>';
+        $("#location").append(html);
+    });
+    auto_plot++;
+    if (auto_plot == 3) {
+        sync_features_to_locations(); // does not do what we want since the map is probably not ready yet
+        plot();
+    }
+}
 
-    function onDatasetsReceived(param) {
-        datasets = param;
-        $.each(datasets, function(i, dataset) {
-            var html = '<option value="'+dataset.koodi+'"';
-            if (locs[dataset.koodi]) html += ' selected';
-            html += '>'+dataset.nimike+'</option>';
-            $("#location").append(html);
+function onVariablesReceived(param) {
+    variables = param;
+    $.each(variables, function(i, variable) {
+        var html = '<option value="'+variable.suure+'"';
+        if (vars[variable.suure]) html += ' selected';
+        html += '>'+variable.nimi+'</option>';
+        $("#variable").append(html);
+    });
+    auto_plot++;
+    if (auto_plot == 3) {
+        sync_features_to_locations(); // does not do what we want since the map is probably not ready yet
+        plot();
+    }
+}
+
+function plot() {
+    
+    var placeholder = $("#placeholder");
+    var selected_locations = $("#location :selected");
+    var selected_variables = $("#variable :selected");
+    
+    function onDatasetReceived(data) {
+        var options = {
+            xaxis: { 
+                mode: "time" 
+            },
+            zoom: {
+		interactive: true
+	    },
+	    pan: {
+		interactive: true
+	    }
+        };
+        var plot = $.plot(placeholder, data, options);
+        var yaxis_width = 30; // this is a guess for now! probably this is not a constant
+        var left = (selected_variables.length-1)*yaxis_width;
+        selected_variables.each(function() {
+            var v = $(this).val();
+            $.each(variables, function(i, variable) {
+                if (v == variable.suure) {
+                    placeholder.append(
+                        "<div style='position:absolute;left:"+left+"px;top:20px;color:#666;font-size:smaller'>"+
+                            variable.yksikko+"</div>");
+                    left -= yaxis_width;
+                }
+            });
         });
     }
     
+    var get = 'from='+$("#beginDate").val()+'&to='+$("#endDate").val();
+    var php_get = get;
+    selected_variables.each(function() {
+        var v = $(this).val();
+        v = v.replace("+","%2B");
+        get += '&suure='+v;
+        php_get += '&suure[]='+v;
+    });
+    selected_locations.each(function() {
+        var v = $(this).val();
+        get += '&paikka='+v;
+        php_get += '&paikka[]='+v;
+    });
+    var data_get = sos_server+'request=GetDataset'+'&max=5000&'+get;
+    var page_get = '/data.php?'+php_get;
+    $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
+    $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a>');
+    
+    $.ajax({
+        url: data_get,
+        type: "GET",
+        dataType: "json",
+        success: onDatasetReceived
+    });
+}
+
+$(function() {
+
     $.ajax({
 	url: sos_server+'request=GetDatasets',
 	type: "GET",
 	dataType: "json",
 	success: onDatasetsReceived
     });
-
-    function onVariablesReceived(param) {
-        variables = param;
-        $.each(variables, function(i, variable) {
-            var html = '<option value="'+variable.suure+'"';
-            if (vars[variable.suure]) html += ' selected';
-            html += '>'+variable.nimi+'</option>';
-            $("#variable").append(html);
-        });
-    }
     
     $.ajax({
 	url: sos_server+'request=GetVariables',
@@ -77,59 +148,12 @@ $(function() {
         $("#beginDate").val(d[0]+'-'+d[1]+'-'+d[2]);
     }
     
-    $("#plot").click(function() {
+    $("#plot").click(plot);
 
-        var placeholder = $("#placeholder");
-        var selected_variables = $("#variable :selected");
+    if (date0) {
+        auto_plot = 1;
+    }
 
-        function onDatasetReceived(data) {
-            var options = {
-                xaxis: { 
-                    mode: "time" 
-                },
-                zoom: {
-		    interactive: true
-		},
-		pan: {
-		    interactive: true
-		}
-            };
-            var plot = $.plot(placeholder, data, options);
-            var yaxis_width = 30; // this is a guess for now! probably this is not a constant
-            var left = (selected_variables.length-1)*yaxis_width;
-            selected_variables.each(function() {
-                var v = $(this).val();
-                $.each(variables, function(i, variable) {
-                    if (v == variable.suure) {
-                        placeholder.append(
-                            "<div style='position:absolute;left:"+left+"px;top:20px;color:#666;font-size:smaller'>"+
-                                variable.yksikko+"</div>");
-                        left -= yaxis_width;
-                    }
-                });
-            });
-        }
-        
-        var get = 'from='+$("#beginDate").val()+'&to='+$("#endDate").val();
-        selected_variables.each(function() {
-            var v = $(this).val();
-            v = v.replace("+","%2B");
-            get += '&suure='+v;
-        });
-        $("#location :selected").each(function() {
-            get += '&paikka='+$(this).val();
-        });
-        var data_get = sos_server+'request=GetDataset'+'&max=5000&'+get;
-        var page_get = '/data.php?'+get; // TÄHÄN TARVII []:t (fucking php)
-        $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
-        $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a>');
-
-        $.ajax({
-            url: data_get,
-            type: "GET",
-            dataType: "json",
-            success: onDatasetReceived
-        });
-    });
+    init();
 
 });

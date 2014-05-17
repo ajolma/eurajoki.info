@@ -10,16 +10,46 @@
     <?php include "flot-0.8.2/include.html"; ?>
     <script src="/OpenLayers-2.13.1/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
-    <?php echo "<script>";
-          if (isset($_GET["raaka"])) {echo "var raaka=1;";}else{echo "var raaka=0;";}
-          echo "</script>"; ?>
+    <?php 
+echo "<script>";
+if (isset($_GET["raaka"])) {echo "var raaka=1;";}else{echo "var raaka=0;";}
+if (isset($_GET["from"])) {echo "var date0='".$_GET["from"]."';";}else{echo "var date0=0;";}
+if (isset($_GET["to"])) {echo "var date1='".$_GET["to"]."';";}else{echo "var date1=0;";}
+if (isset($_GET["paikka"])) {
+    echo "var locs={";
+    $locs = $_GET['paikka'];
+    $n = count($locs);
+    for($i = 0; $i < $n; $i++) {
+        echo "'".$locs[$i]."': 1";
+        if ($i < $n-1)
+            echo ",";
+    }
+    echo "};";
+} else {
+    echo "var locs={};";
+}
+if (isset($_GET["suure"])) {
+    echo "var vars={";
+    $vars = $_GET['suure'];
+    $n = count($vars);
+    for($i = 0; $i < $n; $i++) {
+        echo "'".$vars[$i]."': 1";
+        if ($i < $n-1)
+            echo ",";
+    }
+    echo "};";
+} else {
+    echo "var vars={};";
+}
+echo "</script>"; 
+?>
     <script language="javascript" type="text/javascript" src="/app/base-layers.js"></script>
     <script language="javascript" type="text/javascript" src="/app/sensor-layer.js"></script>
     <script language="javascript" type="text/javascript" src="/app/map.js"></script>
     <script language="javascript" type="text/javascript" src="/app/hover.js"></script>
     <script language="javascript" type="text/javascript" src="/app/init-data-viewer.js"></script>
   </head>
-  <body onload="init()">
+  <body>
     <?php include "content/fb-boot.html"; ?>  
     <div class="main">
       <div class="header_resize">
@@ -36,14 +66,13 @@
           <div class="map_left">
             <div id="map"></div>
             <table>
-              <tr><th>Paikka</th><th>Muuttuja</th><th>AlkuPvm</th><th>LoppuPvm</th><th></th><th></th></tr>
+              <tr><th>Paikka</th><th>Muuttuja</th><th>AlkuPvm</th><th>LoppuPvm</th><th></th></tr>
               <tr>
                 <td><select multiple id="location" size=5 onChange="javascript:selectLocation();"></select></td>
                 <td><select multiple id="variable" size=5 onChange="javascript:selectVariable();"></select></td>
                 <td><input type="text" id="beginDate" size="10" /></td>
                 <td><input type="text" id="endDate" size="10" /></td>
                 <td><input type="button" value="Päivitä" id="plot" /></td>
-                <td><div id="data_link"></div></td>
               </tr>
             </table>
           </div>
@@ -59,6 +88,8 @@
               <div id="placeholder" class="demo-placeholder"></div>
             </div>
           </div>
+          <div id="data_link"></div>
+          <div id="page_link"></div>
         </div>
       </div>
       <div class="FBG">
