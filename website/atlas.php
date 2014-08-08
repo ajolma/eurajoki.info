@@ -11,7 +11,7 @@
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
     <script type="text/javascript" src="app/base-layers.js"></script>
     <script type="text/javascript" src="app/overlays.js"></script>
-    <script type="text/javascript" src="/app/map.js"></script>
+    <script type="text/javascript" src="app/map.js"></script>
     <script type="text/javascript" src="app/init-atlas.js"></script>
     <style type="text/css">
       .body{

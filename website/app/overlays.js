@@ -1,9 +1,11 @@
+var overlay_server = 'ajolma.net';
+
 function overlays() {
 
     var ilmakuvat = new OpenLayers.Layer.TMS("Ilmakuvat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: 'http://54.247.187.88/Eurajoki-aerial-images/tiles/',
+        myUrl: 'http://'+overlay_server+'/Eurajoki/aerial-images/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -14,7 +16,7 @@ function overlays() {
     var perus62 = new OpenLayers.Layer.TMS("Peruskartta 1962", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: 'http://54.247.187.88/Eurajoki/peruskartat_1962/tiles.pl/',
+        myUrl: 'http://'+overlay_server+'/Eurajoki/peruskartat_1962/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -25,7 +27,7 @@ function overlays() {
     var senaatin = new OpenLayers.Layer.TMS("Senaatin kartat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: 'http://54.247.187.88/Eurajoki/senaatin_kartat/tiles.pl/',
+        myUrl: 'http://'+overlay_server+'/Eurajoki/senaatin_kartat/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,

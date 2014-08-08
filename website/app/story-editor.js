@@ -1,7 +1,8 @@
 var storiesLayer = null;
 var saveStrategy;
+var server = 'ajolma.net';
 //var server = '54.247.187.88';
-var server = 'localhost';
+//var server = 'localhost';
 var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
 var story_server = 'http://'+server+'/Eurajoki/stories.pl';
 var picture_server = 'http://'+server+'/Eurajoki/files.pl';

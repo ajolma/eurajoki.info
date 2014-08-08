@@ -1,5 +1,6 @@
 var map;
-var server = '54.247.187.88';
+var server = 'ajolma.net';
+//var server = '54.247.187.88';
 //var server = 'localhost';
 var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
 var sos_server = 'http://'+server+'/Eurajoki/m5json.pl?raaka='+raaka+'&';
@@ -101,7 +102,7 @@ function plot() {
     var data_get = sos_server+'request=GetDataset'+'&max=5000&'+get;
     var page_get = '/data.php?'+php_get;
     $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
-    $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a>');
+    $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a> (toimii vain osittain)');
     
     $.ajax({
         url: data_get,

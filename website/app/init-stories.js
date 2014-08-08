@@ -13,6 +13,10 @@ function init() {
     map.addLayers(layers);
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
+    var overlayers = overlays();
+    
+    map.addLayers(overlayers);
+
     MyStyle = function(color,graphic) {
         this.fillOpacity = 0.2;
         this.graphicOpacity = 1;
