@@ -64,16 +64,26 @@ function location_info(data) {
     var str = '';
     $.each(data.muuttujat, function(index, code) {
         var tmp = data.muuttujat2[code];
-        var tip = '';
-        var has_tip = '';
-        if (tmp.kommentti != null) {
-            tip = tmp.kommentti;
-            has_tip = '*';
+        var selected = false;
+        $("#variable :selected").each(function() {
+            var suure = $(this).val();
+            var o = variables[suure];
+            if (o.nimi == tmp.nimi) {
+                selected = true;
+            }
+        });
+        if (selected) {
+            var tip = '';
+            var has_tip = '';
+            if (tmp.kommentti != null) {
+                tip = tmp.kommentti;
+                has_tip = '*';
+            }
+            str += "<div title=\""+tip+"\">"+tmp.nimi+': '+tmp.begin+' .. '+tmp.end+' '+has_tip+'</div>';
         }
-        str += "<div title=\""+tip+"\">"+tmp.nimi+': '+tmp.begin+' .. '+tmp.end+' '+has_tip+'</div>';
     });
     if (str == '') {
-        str = 'Mittaustietoja ei ole toistaiseksi tarjolla.<br />';
+        str = 'Mittaustietoja ei ole toistaiseksi tarjolla valituista muuttujista.<br />';
     }
     info += str;
     $('#location_info').html(info);
@@ -202,9 +212,9 @@ function selectVariable() {
     if (new_selection) {
         sync_locations_to_variables();
         sync_features_to_locations();
-        locations_info();
         set_begin_date();
     }
+    locations_info();
     variables_info();
 }
 

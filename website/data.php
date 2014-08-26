@@ -7,7 +7,7 @@
     <link rel="shortcut icon" href="/favicon.ico" /> 
     <meta http-equiv="Expires" content="Wed, 13 Nov 2013 20:00:00 GMT" />
     <?php include "design/include.html"; ?>
-    <?php include "flot-0.8.2/include.html"; ?>
+    <?php include "flot-0.8.3/include.html"; ?>
     <script src="/OpenLayers-2.13.1/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
     <?php 
@@ -68,8 +68,8 @@ echo "</script>";
             <table>
               <tr><th>Paikka</th><th>Muuttuja</th><th>AlkuPvm</th><th>LoppuPvm</th><th></th></tr>
               <tr>
-                <td><select multiple id="location" size=5 onChange="javascript:selectLocation();"></select></td>
-                <td><select multiple id="variable" size=5 onChange="javascript:selectVariable();"></select></td>
+                <td><select multiple id="location" size=6 onChange="javascript:selectLocation();"></select></td>
+                <td><select multiple id="variable" size=6 onChange="javascript:selectVariable();"></select></td>
                 <td><input type="text" id="beginDate" size="10" /></td>
                 <td><input type="text" id="endDate" size="10" /></td>
                 <td><input type="button" value="Päivitä" id="plot" /></td>
