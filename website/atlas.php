@@ -7,7 +7,7 @@
     <link rel="shortcut icon" href="/favicon.ico" /> 
     <meta http-equiv="EXPIRES" content="Wed, 13 Nov 2013 20:00:00 GMT" />
     <?php include "design/include.html"; ?>
-    <script src="/OpenLayers-2.13.1/OpenLayers.js"></script>
+    <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
     <script type="text/javascript" src="app/base-layers.js"></script>
     <script type="text/javascript" src="app/overlays.js"></script>

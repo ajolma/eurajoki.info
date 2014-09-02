@@ -6,16 +6,16 @@ var server = 'ajolma.net';
 var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
 var story_server = 'http://'+server+'/Eurajoki/stories.pl';
 var picture_server = 'http://'+server+'/Eurajoki/files.pl';
-var lastFeature = null;
+var popup = null;
 var drawControls = null;
 
 function clearPopup() {
-    if (lastFeature != null && lastFeature.popup != null){
-        map.removePopup(lastFeature.popup);
-        lastFeature.popup.destroy();
-        delete lastFeature.popup;
+    if (popup != null){
+        map.removePopup(popup);
+        popup.destroy();
+        delete popup;
+        popup = null;
     }
-    lastFeature = null;
 }
 
 function openStoryWindow() {
@@ -119,16 +119,14 @@ function new_identity() {
                 } else {
                     panel = '<h2>Uusi tarina</h2>Päivitä tarinakartta niin voit editoida tätä tarinaa.';
                 }
-                var popup = new OpenLayers.Popup.FramedCloud(
+                popup = new OpenLayers.Popup.FramedCloud(
                     "featurePopup",
                     feature.geometry.getBounds().getCenterLonLat(),
                     new OpenLayers.Size(400,300),
                     panel,
                     null, true, onPopupClose);
                 popup.autoSize = false;
-                feature.popup = popup;
                 map.addPopup(popup, true);
-                lastFeature = feature;
             }
         }
     });

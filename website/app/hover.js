@@ -1,12 +1,12 @@
-var lastFeature = null;
+var popup = null;
 
 function clearPopup() {
-    if (lastFeature != null && lastFeature.popup != null){
-        map.removePopup(lastFeature.popup);
-        lastFeature.popup.destroy();
-        delete lastFeature.popup;
+    if (popup != null) {
+        map.removePopup(popup);
+        popup.destroy();
+        delete popup;
+        popup = null;
     }
-    lastFeature = null;
 }
 
 OpenLayers.Control.OverFeature = OpenLayers.Class(OpenLayers.Control, {
@@ -45,7 +45,7 @@ OpenLayers.Control.OverFeature = OpenLayers.Class(OpenLayers.Control, {
     },
     over: function(feature) {
         clearPopup();
-        var popup = new OpenLayers.Popup.FramedCloud(
+        popup = new OpenLayers.Popup.FramedCloud(
             'featurePopup',
             feature.geometry.getBounds().getCenterLonLat(),
             new OpenLayers.Size(250, 80),
@@ -53,8 +53,6 @@ OpenLayers.Control.OverFeature = OpenLayers.Class(OpenLayers.Control, {
                 +feature.attributes.info,
             null, true, clearPopup);
         popup.autoSize = false;
-        feature.popup = popup;
-        lastFeature = feature;
         map.addPopup(popup);
     },
     out: function(feature) {

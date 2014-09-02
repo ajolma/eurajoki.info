@@ -72,15 +72,13 @@ function init() {
                     panel = '<h2>'+feature.attributes.otsikko+'</h2>'+
                         feature.attributes.story+pictureForm;
                 }
-                var popup = new OpenLayers.Popup.FramedCloud(
+                popup = new OpenLayers.Popup.FramedCloud(
                     "featurePopup",
                     feature.geometry.getBounds().getCenterLonLat(),
                     new OpenLayers.Size(400,300),
                     panel,
                     null, true, clearPopup);
                 popup.autoSize = false;
-                feature.popup = popup;
-                lastFeature = feature;
                 map.addPopup(popup, true);
             }
         }

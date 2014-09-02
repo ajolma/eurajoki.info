@@ -7,7 +7,7 @@
     <link rel="shortcut icon" href="/favicon.ico" /> 
     <meta http-equiv="EXPIRES" CONTENT="Wed, 13 Nov 2013 20:00:00 GMT" />
     <?php include "design/include.html"; ?>
-    <script src="/OpenLayers-2.13.1/OpenLayers.js"></script>
+    <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
     <?php echo "<script>";
           if (isset($_GET["editor"])) {echo "var editor=1;";}else{echo "var editor=0;";}

@@ -7,8 +7,18 @@
     <link rel="shortcut icon" href="/favicon.ico" /> 
     <meta http-equiv="Expires" content="Wed, 13 Nov 2013 20:00:00 GMT" />
     <?php include "design/include.html"; ?>
-    <?php include "flot-0.8.3/include.html"; ?>
-    <script src="/OpenLayers-2.13.1/OpenLayers.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" href="design/data.css" />
+    
+    <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/jquery/excanvas.js"></script><![endif]-->
+    <script language="javascript" type="text/javascript" src="/jquery/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery-ui.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery.flot.time.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery.flot.navigate.js"></script>
+
+    <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
     <?php 
 echo "<script>";
@@ -84,8 +94,8 @@ echo "</script>";
           </div>
           <div class="clr"></div>
           <div id="content">          
-            <div class="demo-container">
-              <div id="placeholder" class="demo-placeholder"></div>
+            <div class="flot-container">
+              <div id="placeholder" class="flot-placeholder"></div>
             </div>
           </div>
           <div id="data_link"></div>
