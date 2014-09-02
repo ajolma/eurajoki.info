@@ -7,8 +7,12 @@ use Carp;
 use Encode;
 use CGI;
 
-my $tiles = '/var/www/proj/Eurajoki/aerial-images/tiles';
 my $blank = '/var/www/images/256x256_blank.png';
+
+# filesystem directory of the actual tiles
+# note: the subdir must have the name of this program without ext
+my $tiles = $0;
+$tiles =~ s/\.pl$//;
 
 my $q = CGI->new;
 if ($ENV{REQUEST_METHOD} eq 'OPTIONS') {
