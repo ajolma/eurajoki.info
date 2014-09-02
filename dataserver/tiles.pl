@@ -7,7 +7,7 @@ use Carp;
 use Encode;
 use CGI;
 
-my $tiles = '/var/www/proj/Eurajoki/aerial-images/real-tiles';
+my $tiles = '/var/www/proj/Eurajoki/aerial-images/tiles';
 my $blank = '/var/www/images/256x256_blank.png';
 
 my $q = CGI->new;
@@ -23,7 +23,7 @@ if ($ENV{REQUEST_METHOD} eq 'OPTIONS') {
     my $url_with_path = $q->url(-path_info=>1);
 
     my($ext) = $url_with_path =~ /\.(\w+)$/;
-    my($path) = $url_with_path =~ /iles(.*)$/;
+    my($path) = $url_with_path =~ /tiles\.pl(.*)$/;
     my $file = "$tiles/$path";
         
     if ($ext eq 'html' or $ext eq 'xml') {
