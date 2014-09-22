@@ -3,7 +3,7 @@
 use utf8;
 use strict;
 use IO::Handle;
-use Time::Local 'timelocal';
+use Date::Calc qw/Delta_Days/;
 use Carp;
 use Encode;
 use DBI;
@@ -24,22 +24,39 @@ if ($ENV{REQUEST_METHOD} eq 'OPTIONS') {
                       -charset=>'utf-8',
                       -expires=>'+1s',
                       -Access_Control_Allow_Origin=>'*' );
-    page();
+    eval {
+        page();
+    };
+    if ($@) {
+        my $json = JSON->new;
+        my($msg) = $@ =~ /(.*)? at /;
+        my $error = {
+            error => $msg
+        };
+        print $json->encode($error);
+    }
 }
 
 sub page {
-    my $db = `grep local-eurajoki-ltd /var/www/etc/dbi`;
-    chomp $db;
-    my(undef, $connect, $user, $pass) = split /\s+/, $db;
-    my $dbh = DBI->connect($connect, $user, $pass) or croak('no db');
-    if ($q->param('request') eq 'GetDatasets') {
+    my $conf;
+    open(my $fh, '<', '/var/www/etc/dispatch') or croak('first configuration error');
+    while (<$fh>) {
+        chomp;
+        my @l = split /\t/;
+        $conf = $l[1] if $l[0] and $l[0] eq $0;
+    }
+    $conf or croak('second configuration error');
+    my($connect, $user, $pass) = split /\s+/, $conf;
+    my $dbh = DBI->connect($connect, $user, $pass) or croak('database connection problem');
+    my $request = $q->param('request') || '';
+    if ($request eq 'GetDatasets') {
 	get_datasets($dbh);
-    } elsif ($q->param('request') eq 'GetDataset') {
+    } elsif ($request eq 'GetDataset') {
 	get_dataset($dbh);
-    } elsif ($q->param('request') eq 'GetVariables') {
+    } elsif ($request eq 'GetVariables') {
 	get_variables($dbh);
     } else {
-        print('{"error": "No request"}',"\n");
+        croak("Unrecognized request: '$request'");
     }
 }
 
@@ -83,6 +100,9 @@ sub get_datasets {
     my %sets;
     my %codes;
     while (my($label,$name,$code,$kommentti) = $sth->fetchrow_array) {
+        $kommentti = '' unless $kommentti;
+        $kommentti =~ s/\r//g;
+        $kommentti =~ s/\n/\\n/g;
         $sets{$name}{label} = $label;
         $sets{$name}{code} = $code;
         $sets{$name}{kommentti} = $kommentti || '';
@@ -235,16 +255,11 @@ sub get_dataset {
     my $raw = $q->param('raaka');
     my @suureet = $q->param('suure');
     my @paikat = $q->param('paikka');
-    if (@suureet == 0 or @paikat == 0) {
-        print "{\"error\": \"Required param 'paikka' or 'suure' missing.\"}\n";
-        return;
-    }
+    (@suureet != 0 and @paikat != 0) or croak("Required param 'paikka' or 'suure' missing.");
     my $from = $q->param('from');
     my $to = $q->param('to');
-    if (!$from or !$to) {
-        print "{\"error\": \"Required param 'from' or 'to' missing.\"}\n";
-        return;
-    }
+    ($from and $to) or croak("Required param 'from' or 'to' missing.");
+
     #print STDERR "suure=$suure, paikka=[@paikat]\n";
 
     my %liput = (1 => 'Outlier', 3 => 'Mittausvirhe');
@@ -303,7 +318,6 @@ sub get_dataset {
         $arvo = 'null' unless defined $arvo;
 	$paikat{$paikka} = 1;
         my($yr,$mo,$day,$hr,$min,$sec) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
-        $mo--;
 	my $x = $data{$aika};
 	$data{$aika}{$paikka}{$suure} = $arvo;
         $have_data_from_day{"$yr-$mo-$day"}{$paikka}{$suure} = 1;
@@ -327,7 +341,6 @@ sub get_dataset {
         $arvo = 'null' unless defined $arvo;
 	$paikat{$paikka} = 1;
         my($yr,$mo,$day) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/;
-        $mo--;
         # is there data from this place on this day already?
         next if $have_data_from_day{$aika}{$paikka}{$suure};
 	my $x = $data{$aika};
@@ -335,6 +348,7 @@ sub get_dataset {
         $flags{$aika}{$paikka}{$suure} = $lippu;
         $have_data{$paikka}{$suure} = 1;
 	next if $x;
+        # set it to the noon
 	$ajat{$aika} = [$yr,$mo,$day,12,0,0];
     }
 
@@ -354,15 +368,17 @@ sub get_dataset {
             my $first2 = 1;
             for my $aika (@aika) {
                 next unless $data{$aika}{$paikka}{$suure};
-                my $time = $aika;
-                $time .= ' 12:00:00' unless $time =~ / /;
                 print ",\n" unless $first2;
                 $first2 = 0;
-                # time is needed in JavaScript timestamps, UTC
+                # time is needed in JavaScript timestamps, which is milliseconds since 1970/01/01
+                my @a = @{$ajat{$aika}};
+                my $time = Delta_Days(1970, 1, 1, @{$ajat{$aika}}[0,1,2]); # days
+                $time *= 60 * 60 * 24;
+                $time += $a[3]*60*60 + $a[4]*60 + $a[5];
                 if ($data{$aika}{$paikka}{$suure} eq 'null') {
                     print 'null';
                 } else {
-                    print "[",timelocal(@{$ajat{$aika}}[5,4,3,2,1,0])*1000,",$data{$aika}{$paikka}{$suure}]";
+                    print "[",$time*1000,",$data{$aika}{$paikka}{$suure}]";
                 }
             }
             print "],\"$suureet{$suure}{visualisointi}\": { \"show\": true }";

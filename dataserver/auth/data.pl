@@ -150,7 +150,7 @@ sub Tallenna {
         #next if $arvo eq 'NULL' and ($table eq 'data' or $table eq 'data_tarkistettu');
         #next unless defined $arvo and $arvo ne '';
         my $date = sql_date($aika);
-        if ($data{$date}) {
+        if (exists $data{$date}) {
             $sql .= "update $table set arvo='$arvo' ".
                 "where aika='$date' and paikka='$paikka' and suure='$params->{Suure}';\n";
         } else {
