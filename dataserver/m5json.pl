@@ -3,6 +3,7 @@
 use utf8;
 use strict;
 use IO::Handle;
+use Time::Local 'timelocal';
 use Date::Calc qw/Delta_Days/;
 use Carp;
 use Encode;
@@ -370,11 +371,14 @@ sub get_dataset {
                 next unless $data{$aika}{$paikka}{$suure};
                 print ",\n" unless $first2;
                 $first2 = 0;
-                # time is needed in JavaScript timestamps, which is milliseconds since 1970/01/01
-                my @a = @{$ajat{$aika}};
-                my $time = Delta_Days(1970, 1, 1, @{$ajat{$aika}}[0,1,2]); # days
-                $time *= 60 * 60 * 24;
-                $time += $a[3]*60*60 + $a[4]*60 + $a[5];
+                # time is needed in JavaScript timestamps, which is milliseconds since 1970/01/01 UTC
+                # our data is in timezoneless timestamp (implicitly in Europe/Helsinki TZ)
+                # this server is in Finland, thus timelocal should work
+                # but this is not a generic solution!
+                my $time = timelocal(@{$ajat{$aika}}[5,4,3,2,1,0]);
+                #my $time = Delta_Days(1970, 1, 1, @{$ajat{$aika}}[0,1,2]); # days
+                #$time *= 60 * 60 * 24;
+                #$time += $a[3]*60*60 + $a[4]*60 + $a[5];
                 if ($data{$aika}{$paikka}{$suure} eq 'null') {
                     print 'null';
                 } else {

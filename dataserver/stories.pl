@@ -13,9 +13,8 @@ use CGI;
 #binmode STDERR, ":utf8";
 #binmode STDOUT, ":utf8";
 
-my $me = 'http://54.247.187.88/Eurajoki/stories.pl';
-
 my $q = CGI->new;
+my $me = $q->self_url;
 my $email = $q->param('email');
 my $password = $q->param('password');
     
@@ -43,14 +42,17 @@ if ($ENV{REQUEST_METHOD} eq 'OPTIONS') {
 	-Access_Control_Max_Age=>60*60*24
 	);
 } else {
-    page();
+    eval {
+        page();
+    };
+    print $html_header, $@ if $@;
 }
 
 sub page {
     my $db = `grep local-eurajoki-ltd /var/www/etc/dbi`;
     chomp $db;
     my(undef, $connect, $user, $pass) = split /\s+/, $db;
-    my $dbh = DBI->connect($connect, $user, $pass) or croak('no db');
+    my $dbh = DBI->connect($connect, $user, $pass) or croak('connection to database failed');
     $dbh->{pg_enable_utf8} = 1;
 
     my $story = $q->param('story'); # story id
@@ -74,6 +76,8 @@ sub page {
     }
 
     if ($cmd and $cmd eq 'del') {
+        $sql = "delete from kuvat where story='$story'";
+        $sth = $dbh->do($sql) or croak($dbh->errstr);
         $sql = "delete from tarinat where id='$story'";
         $sth = $dbh->do($sql) or croak($dbh->errstr);
         print 
@@ -99,6 +103,8 @@ sub page {
     $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     $rv = $sth->execute or croak($dbh->errstr);
     my($otsikko,$tarina) = $sth->fetchrow_array;
+    $otsikko = '' unless defined $otsikko;
+    $tarina = '' unless defined $tarina;
     $otsikko = encode('utf8',$otsikko);
     $tarina = encode('utf8',$tarina);
 
