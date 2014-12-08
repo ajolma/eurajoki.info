@@ -62,7 +62,8 @@ function plot() {
         var ann_time = 1407240000000;
         var options = {
             xaxis: { 
-                mode: "time" 
+                mode: "time",
+                timezone: "browser"
             },
             zoom: {
 		interactive: true
@@ -71,16 +72,16 @@ function plot() {
 		interactive: true
 	    },
             grid: {
-                markings: [
-                    { color: '#ff0000', linewidth: 1, xaxis: { from: ann_time, to: ann_time } }
-                ]
+                //markings: [
+                //    { color: '#ff0000', linewidth: 1, xaxis: { from: ann_time, to: ann_time } }
+                //]
             }
         };
         var plot = $.plot(placeholder, data, options);
 
         // annotation texts
-        var o = plot.pointOffset({ x: ann_time, y: 0 });
-        var ann = "Rajuja ukkoskuuroja";
+        //var o = plot.pointOffset({ x: ann_time, y: 0 });
+        //var ann = "Rajuja ukkoskuuroja";
         //placeholder.append("<div style='position:absolute;left:" + 
         //                   (o.left + 4) + "px;top:" + (o.top - 10) + 
         //                   "px;color:#666;font-size:smaller'>" + ann + "</div>");
@@ -117,7 +118,7 @@ function plot() {
     var data_get = sos_server+'request=GetDataset'+'&max=5000&'+get;
     var page_get = '/data.php?'+php_get;
     $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
-    $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a> (linkki ei valitse paikkoja kartalta)');
+    $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a> (kopiointia varten) <font color="gray">(linkki on hieman rikki: linkistä avautuvalla sivulla paikat eivät tulee valituiksi kartalla)</font>');
     
     $.ajax({
         url: data_get,
