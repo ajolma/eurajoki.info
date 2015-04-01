@@ -9,6 +9,7 @@
     <?php include "design/include.html"; ?>
 
     <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
+    <style>.ui-datepicker{z-index: 9999 !important;}</style>
     <link rel="stylesheet" type="text/css" href="design/data.css" />
     
     <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/jquery/excanvas.js"></script><![endif]-->
