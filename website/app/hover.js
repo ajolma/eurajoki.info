@@ -29,7 +29,7 @@ OpenLayers.Control.OverFeature = OpenLayers.Class(OpenLayers.Control, {
                 this.layer,
                 {
                     'over': this.over,
-                    'out' : this.out
+                    'clickout': this.clickout
                 },
                 {}
             )};
@@ -55,7 +55,7 @@ OpenLayers.Control.OverFeature = OpenLayers.Class(OpenLayers.Control, {
         popup.autoSize = false;
         map.addPopup(popup);
     },
-    out: function(feature) {
-        //clearPopup();
+    clickout: function(feature) {
+        clearPopup();
     }
 });

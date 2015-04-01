@@ -60,7 +60,7 @@ function location_info(data) {
         tip = data.kommentti;
         has_tip = '*';
     }
-    info += "<b><div title=\""+tip+"\">"+data.nimike+' '+has_tip+"</b>"+raw+":</div>";
+    info += "<br /><b><div title=\""+tip+"\">"+data.nimike+' '+has_tip+"</b>"+raw+":</div>";
     var str = '';
     $.each(data.muuttujat, function(index, code) {
         var tmp = data.muuttujat2[code];
@@ -102,8 +102,12 @@ function variables_info() {
     $("#variable :selected").each(function() {
         var suure = $(this).val();
         var o = variables[suure];
+        info += "<b>"+o.nimi+"</b>";
         if (o.kuvaus != null)
-            info += "<b>"+o.nimi+"</b><br />&nbsp;&nbsp;&nbsp;&nbsp;"+o.kuvaus+"<br />";
+            info += "<br />&nbsp;&nbsp;&nbsp;&nbsp;"+o.kuvaus+".";
+        if (o.yksikko != null)
+            info += "<br />&nbsp;&nbsp;&nbsp;&nbsp;Yksikkö (y-akseli kuvaajassa): "+o.yksikko+".";
+        info += "<br />";
     });
     $('#variable_info').html(info);
 }
