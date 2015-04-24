@@ -1,3 +1,7 @@
+/*! eurajoki.info
+* https://github.com/ajolma/eurajoki.info
+* Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
+
 var map;
 var server = 'ajolma.net';
 //var server = '54.247.187.88';
@@ -31,7 +35,7 @@ function init() {
     
     mittaritLayer(layers);
 
-    map = map();
+    map = make_map();
 
     map.addLayers(layers);
 
@@ -191,5 +195,9 @@ $(function() {
     }
 
     init();
+
+    $('#data_info').accordion({collapsible: true});
+    $('#location_info').accordion({collapsible: true});
+    $('#variable_info').accordion({collapsible: true});
 
 });

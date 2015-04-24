@@ -1,3 +1,7 @@
+/*! eurajoki.info
+* https://github.com/ajolma/eurajoki.info
+* Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
+
 var mittarit; // created by mittaritLayer() in init()
 var datasets; // set to received data in jquery initialization
 var variables; // set to received data in jquery initialization
@@ -60,8 +64,9 @@ function location_info(data) {
         tip = data.kommentti;
         has_tip = '*';
     }
-    info += "<br /><b><div title=\""+tip+"\">"+data.nimike+' '+has_tip+"</b>"+raw+":</div>";
-    var str = '';
+    info += "<h3><div title=\""+tip+"\">"+data.nimike+' '+has_tip+raw+":</div></h3><div>";
+    var str = data.kuvaus+'<br /><br /><b>Mitatut muuttujat ja datan aikaväli:</b><br />';
+    var c = 0;
     $.each(data.muuttujat, function(index, code) {
         var tmp = data.muuttujat2[code];
         var selected = false;
@@ -80,36 +85,39 @@ function location_info(data) {
                 has_tip = '*';
             }
             str += "<div title=\""+tip+"\">"+tmp.nimi+': '+tmp.begin+' .. '+tmp.end+' '+has_tip+'</div>';
+            c++;
         }
     });
-    if (str == '') {
-        str = 'Mittaustietoja ei ole toistaiseksi tarjolla valituista muuttujista.<br />';
+    if (c == 0) {
+        str = 'Mittaustietoja ei ole toistaiseksi tarjolla valituista muuttujista.';
     }
-    info += str;
+    info += str+'</div>';
     $('#location_info').html(info);
 }
 
 function locations_info() {
-    document.getElementById('location_info').innerHTML = '';
+    $('#location_info').html('');
     $("#location :selected").each(function() {
         var koodi = $(this).val();
         location_info(datasets[koodi]);
     });
+    $('#location_info').accordion("refresh");
 }
 
 function variables_info() {
-    var info = '<br />';
+    var info = '';
     $("#variable :selected").each(function() {
         var suure = $(this).val();
         var o = variables[suure];
-        info += "<b>"+o.nimi+"</b>";
+        info += "<h3>"+o.nimi+"</h3><div>";
         if (o.kuvaus != null)
-            info += "<br />&nbsp;&nbsp;&nbsp;&nbsp;"+o.kuvaus+".";
+            info += o.kuvaus+".<br />";
         if (o.yksikko != null)
-            info += "<br />&nbsp;&nbsp;&nbsp;&nbsp;Yksikkö (y-akseli kuvaajassa): "+o.yksikko+".";
-        info += "<br />";
+            info += "Yksikkö (y-akseli kuvaajassa): "+o.yksikko+".";
+        info += "</div>";
     });
     $('#variable_info').html(info);
+    $('#variable_info').accordion("refresh");
 }
 
 function sync_variables() { // to locations

@@ -1,4 +1,9 @@
+/*! eurajoki.info
+* https://github.com/ajolma/eurajoki.info
+* Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
+
 var overlay_server = 'ajolma.net';
+var river_layer = null;
 
 function overlays() {
 
@@ -35,7 +40,44 @@ function overlays() {
         visibility: false
     });
 
-    return [ilmakuvat,perus62,senaatin];
+    MyStyle = function(color,graphic) {
+        this.fillOpacity = 0.2;
+        this.graphicOpacity = 1;
+        this.strokeColor = color;
+        this.fillColor = color;
+        this.graphicName = graphic;
+        this.pointRadius = 10;
+        this.strokeWidth = 3;
+        this.rotation = 45;
+        this.strokeLinecap = "butt";
+    };
+
+    var styleMap = new OpenLayers.StyleMap({
+        "default": new OpenLayers.Style(new MyStyle("blue","star")),
+        select: new OpenLayers.Style(new MyStyle("red","star")),
+        temporary: new OpenLayers.Style(new MyStyle("yellow","star"))
+    });
+
+    var server = 'localhost';
+    var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
+    river_layer = new OpenLayers.Layer.Vector("Kasvillisuus", {
+        strategies: [
+            new OpenLayers.Strategy.BBOX(),
+            new OpenLayers.Strategy.Fixed()
+        ],
+        protocol: new OpenLayers.Protocol.WFS.v1_1_0({
+            version: "1.1.0",
+            srsName: "EPSG:3857",
+            url: wfs_server,
+            featureType: "local.jokipalat.geom",
+            outputFormat: "GML2"
+        }),
+        visibility: true,
+        extractAttributes: true,
+        styleMap: styleMap
+    });
+
+    return [ilmakuvat,perus62,senaatin,river_layer];
 }
 
 function getURL(bounds) {

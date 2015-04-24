@@ -1,4 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- This file is part of eurajoki.info
+     https://github.com/ajolma/eurajoki.info
+     Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 -->
 <?php $page='data'; ?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -9,7 +12,11 @@
     <?php include "design/include.html"; ?>
 
     <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
-    <style>.ui-datepicker{z-index: 9999 !important;}</style>
+    <style>
+      .ui-datepicker{ z-index: 9999 !important; }
+      .ui-accordion .ui-accordion-content { padding: 0.5em 0.3em; }
+      .ui-widget-content a { color: #69bacb; }
+    </style>
     <link rel="stylesheet" type="text/css" href="design/data.css" />
     
     <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/jquery/excanvas.js"></script><![endif]-->
@@ -88,9 +95,10 @@ echo "</script>";
             </table>
           </div>
           <div class="map_right">
-            <div><?php include "content/data-info.html"; ?></div>
+            <div id="data_info"><?php include "content/data-info.html"; ?></div>
+            <h3>Valitut mittauspisteet</h3>
             <div id="location_info"></div>
-            <div id="data_load_info"></div>
+            <h3>Valitut muuttujat</h3>
             <div id="variable_info"></div>
           </div>
           <div class="clr"></div>

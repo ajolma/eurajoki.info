@@ -1,4 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- This file is part of eurajoki.info
+     https://github.com/ajolma/eurajoki.info
+     Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 -->
 <?php $page='tietoa'; ?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -7,12 +10,7 @@
     <meta http-equiv="EXPIRES" CONTENT="Wed, 13 Nov 2013 20:00:00 GMT" />
     <link rel="shortcut icon" href="/favicon.ico" /> 
     <?php include "design/include.html"; ?>
-    <style type="text/css">
-      .left { float:left; width:800px; margin:0; padding:10px;}
-      .left ul {
-      list-style: disc outside none;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/tietoa.css" />
   </head>
   <body>
     <?php include "content/fb-boot.html"; ?>

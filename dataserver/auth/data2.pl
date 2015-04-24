@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+# This file is part of eurajoki.info
+# https://github.com/ajolma/eurajoki.info
+# Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2
+
 use utf8;
 use strict;
 use IO::Handle;

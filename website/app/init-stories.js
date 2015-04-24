@@ -1,3 +1,6 @@
+/*! eurajoki.info
+* https://github.com/ajolma/eurajoki.info
+* Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 function init() {
 
@@ -7,7 +10,7 @@ function init() {
         set_identity_callback = new_identity;
     }
 
-    map = map();
+    map = make_map();
 
     var layers = taustakartat();
     map.addLayers(layers);

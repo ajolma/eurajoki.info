@@ -1,4 +1,8 @@
-function map() {
+/*! eurajoki.info
+* https://github.com/ajolma/eurajoki.info
+* Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
+
+function make_map() {
 
     return new OpenLayers.Map({
         div: "map",

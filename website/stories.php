@@ -1,4 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- This file is part of eurajoki.info
+     https://github.com/ajolma/eurajoki.info
+     Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 -->
 <?php $page='tarinat'; ?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -18,20 +21,7 @@
     <script type="text/javascript" src="app/overlays.js"></script>
     <script type="text/javascript" src="app/map.js"></script>
     <script type="text/javascript" src="app/init-stories.js"></script>
-    <style type="text/css">
-      .body{
-      color:black;
-      font-size:12px;
-      font-family:tahoma,arial,verdana,sans-serif
-      }
-      #map {
-      width: 725px;
-      height: 625px;
-      margin: 0;
-      }
-      .map_left { float:left; width:725px; margin:0; padding:0px;}
-      .map_right { float:right; width:165px; margin:0; padding:10px;}
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/stories.css" />
   </head>
   <body onload="init()">
     <?php include "content/fb-boot.html"; ?>

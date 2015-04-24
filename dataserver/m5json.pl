@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+# This file is part of eurajoki.info
+# https://github.com/ajolma/eurajoki.info
+# Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2
+
 use utf8;
 use strict;
 use IO::Handle;
@@ -94,18 +98,19 @@ sub get_datasets {
     my($dbh) = @_;
     my @sql;
     my $raw = $q->param('raaka');
-    my $sql = "select nimike,nimi,koodi,kommentti from mittauskohteet";
+    my $sql = "select nimike,nimi,koodi,info,kommentti from mittauskohteet";
     push @sql,$sql;
     my $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     my $rv = $sth->execute or croak($dbh->errstr);
     my %sets;
     my %codes;
-    while (my($label,$name,$code,$kommentti) = $sth->fetchrow_array) {
+    while (my($label,$name,$code,$info,$kommentti) = $sth->fetchrow_array) {
         $kommentti = '' unless $kommentti;
         $kommentti =~ s/\r//g;
         $kommentti =~ s/\n/\\n/g;
         $sets{$name}{label} = $label;
         $sets{$name}{code} = $code;
+        $sets{$name}{info} = $info;
         $sets{$name}{kommentti} = $kommentti || '';
         $codes{$code} = {};
     }
@@ -171,20 +176,19 @@ sub get_datasets {
         }
     }
 
-    print "{\n";
+    my %datasets;
     for (@sql) {$_ = "<sql>$_</sql>"}
-    #print "\"sql\": \"",@sql,"\",\n";
-    my $first = 1;        
     for my $name (sort {$sets{$a}{label} cmp $sets{$b}{label}} keys %sets) {
-        print "," unless $first;
-        $first = 0;
 	my $code = $sets{$name}{code};
-        print "\"$code\": {\n";
-	#print "<nimi>$name</nimi>\n";
-        print "\"koodi\": \"$code\",\n";
-        print "\"nimi\": \"$name\",\n";
-        print "\"nimike\": \"$sets{$name}{label}\",\n";
-        print "\"kommentti\": \"$sets{$name}{kommentti}\",";
+
+        $datasets{$code} = {
+            koodi => $code,
+            nimi => $name,
+            nimike => $sets{$name}{label},
+            kuvaus => $sets{$name}{info},
+            kommentti => $sets{$name}{kommentti}
+        };
+
         my $info = '';
         my @vars;
         my @begin;
@@ -201,7 +205,7 @@ sub get_datasets {
                 for (@t) {$_+=0};
                 my $t1 = "$t[2].$t[1].$t[0]";
                 $info .= "----$var2var{$var}: $t0 .. $t1; ";
-                push @vars, '"'.$var.'"';
+                push @vars, $var;
             }
         } else {
             for my $type (sort keys %{$codes{$code}}) {
@@ -218,9 +222,9 @@ sub get_datasets {
                 }
             }
         }
-        print "\"muuttujat\": [ ".join(',', @vars)." ],\n";
+        $datasets{$code}{muuttujat} = \@vars;
+        $datasets{$code}{info} = $info;
 
-        print "\"muuttujat2\": ";
         my %vars;
         for my $var (sort {$var2var{$a} cmp $var2var{$b}} keys %{$variables{$code}}) {
             $vars{$var} =
@@ -237,15 +241,16 @@ sub get_datasets {
             $vars{$var}{end} = "$t[2].$t[1].$t[0]";
             $vars{$var}{loppupvm} = "$t[0]-$t[1]-$t[2]";
         }
-        my $json = JSON->new;
-        print $json->encode(\%vars),',';
 
-        print "\"alkupvm\": \"$begin[0]-$begin[1]-$begin[2]\",\n" if @begin;
-        print "\"loppupvm\": \"$end[0]-$end[1]-$end[2]\",\n" if @end;
-        print "\"info\": \"$info\"\n";
-	print "}\n";
+        $datasets{$code}{muuttujat2} = \%vars;
+
+        $datasets{$code}{alkupvm} = "$begin[0]-$begin[1]-$begin[2]" if @begin;
+        $datasets{$code}{loppupvm} = "$end[0]-$end[1]-$end[2]" if @end;
+        
     }
-    print "}\n";
+    
+    my $json = JSON->new;
+    print $json->encode(\%datasets);
 }
 
 my %ajat;
@@ -319,7 +324,8 @@ sub get_dataset {
         $arvo = 'null' unless defined $arvo;
 	$paikat{$paikka} = 1;
         my($yr,$mo,$day,$hr,$min,$sec) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
-	my $x = $data{$aika};
+	$mo--;
+        my $x = $data{$aika};
 	$data{$aika}{$paikka}{$suure} = $arvo;
         $have_data_from_day{"$yr-$mo-$day"}{$paikka}{$suure} = 1;
         $flags{$aika}{$paikka}{$suure} = $lippu;
@@ -327,7 +333,6 @@ sub get_dataset {
 	next if $x;
 	$ajat{$aika} = [$yr,$mo,$day,$hr,$min,$sec];
     }
-
     # insert daily data for those days from which there is no "continuous" data
     $table = $raw ? 'data_daily' : 'data_daily_tarkistettu';
     $sql = 
@@ -342,6 +347,7 @@ sub get_dataset {
         $arvo = 'null' unless defined $arvo;
 	$paikat{$paikka} = 1;
         my($yr,$mo,$day) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/;
+        $mo--;
         # is there data from this place on this day already?
         next if $have_data_from_day{$aika}{$paikka}{$suure};
 	my $x = $data{$aika};
@@ -352,12 +358,31 @@ sub get_dataset {
         # set it to the noon
 	$ajat{$aika} = [$yr,$mo,$day,12,0,0];
     }
-
     my @aika = sort cmp_dates keys %ajat;
     
     print "[\n";
+    
     my $yaxis = 1;
     my $first = 1;
+    
+    # jos vain yksi suure, niin sen raja-arvot
+    if (@suureet == 1) {
+        $sql = "select \"raja-arvo\",selite from \"raja-arvot\" where suure='$suureet[0]'";
+        $sth = $dbh->prepare($sql) or croak($dbh->errstr);
+        $rv = $sth->execute or croak($dbh->errstr);
+        while (1) {
+            my($arvo,$selite) = $sth->fetchrow_array;
+            last unless $selite;
+            $first = 0;
+            my %ra = ( label => $selite, yaxis => $yaxis );
+            my $time0 = timelocal(@{$ajat{$aika[0]}}[5,4,3,2,1,0])*1000;
+            my $time1 = timelocal(@{$ajat{$aika[$#aika]}}[5,4,3,2,1,0])*1000;
+            $ra{data} = [[$time0, $arvo], [$time1, $arvo]];
+            my $json = JSON->new;
+            print $json->encode(\%ra);
+        }
+    }
+
     for my $suure (@suureet) {
         for my $paikka (@paikat) {
             next unless $have_data{$paikka}{$suure};
