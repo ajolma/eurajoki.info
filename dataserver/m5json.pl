@@ -98,19 +98,20 @@ sub get_datasets {
     my($dbh) = @_;
     my @sql;
     my $raw = $q->param('raaka');
-    my $sql = "select nimike,nimi,koodi,info,kommentti from mittauskohteet";
+    my $sql = "select nimike,nimi,koodi,info,info2,kommentti from mittauskohteet";
     push @sql,$sql;
     my $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     my $rv = $sth->execute or croak($dbh->errstr);
     my %sets;
     my %codes;
-    while (my($label,$name,$code,$info,$kommentti) = $sth->fetchrow_array) {
+    while (my($label,$name,$code,$info,$info2,$kommentti) = $sth->fetchrow_array) {
         $kommentti = '' unless $kommentti;
         $kommentti =~ s/\r//g;
         $kommentti =~ s/\n/\\n/g;
         $sets{$name}{label} = $label;
         $sets{$name}{code} = $code;
         $sets{$name}{info} = $info;
+        $sets{$name}{info2} = $info2;
         $sets{$name}{kommentti} = $kommentti || '';
         $codes{$code} = {};
     }
@@ -186,6 +187,7 @@ sub get_datasets {
             nimi => $name,
             nimike => $sets{$name}{label},
             kuvaus => $sets{$name}{info},
+            kuvaus2 => $sets{$name}{info2},
             kommentti => $sets{$name}{kommentti}
         };
 
