@@ -3,9 +3,6 @@
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 var map;
-var server = 'ajolma.net';
-//var server = '54.247.187.88';
-//var server = 'localhost';
 var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
 var sos_server = 'http://'+server+'/Eurajoki/m5json.pl?raaka='+raaka+'&';
 var auto_plot = 0;
@@ -47,7 +44,10 @@ function init() {
 
 function onDatasetsReceived(param) {
     datasets = param;
-    $.each(datasets, function(i, dataset) {
+    var sortable = [];
+    $.each(datasets, function(i, dataset) { sortable.push(dataset); });
+    sortable.sort(function(a, b) { return a.nimike.localeCompare(b.nimike) })
+    $.each(sortable, function(i, dataset) {
         var html = '<option value="'+dataset.koodi+'"';
         if (locs[dataset.koodi]) html += ' selected';
         html += '>'+dataset.nimike+'</option>';

@@ -65,7 +65,9 @@ function location_info(data) {
         has_tip = '*';
     }
     info += "<h3><div title=\""+tip+"\">"+data.nimike+' '+has_tip+raw+":</div></h3><div>";
-    var str = data.kuvaus+'<br /><br /><b>Mitatut muuttujat ja datan aikaväli:</b><br />';
+    var str = data.kuvaus + '<br /><br />';
+    if (data.kuvaus2) str += data.kuvaus2 + '<br /><br />';
+    str += '<b>Mitatut muuttujat ja datan aikaväli:</b><br />';
     var c = 0;
     $.each(data.muuttujat, function(index, code) {
         var tmp = data.muuttujat2[code];
@@ -247,7 +249,7 @@ function mittaritLayer(layers) {
             version: "1.1.0",
             srsName: "EPSG:3857",
             url: wfs_server,
-            featureType: "ej.mittauskohteet.geom",
+            featureType: mittarit_prefix+".mittauskohteet.geom",
             outputFormat: "GML2"
         }),
         visibility: true,

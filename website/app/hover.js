@@ -53,9 +53,10 @@ OpenLayers.Control.OverFeature = OpenLayers.Class(OpenLayers.Control, {
             'featurePopup',
             feature.geometry.getBounds().getCenterLonLat(),
             new OpenLayers.Size(250, 80),
-            '<b>'+feature.attributes.nimike+'</b><br />'
-                +feature.attributes.info,
-            null, true, clearPopup);
+            '<b>'+feature.attributes.nimike+'</b><br />'+feature.attributes.info,
+            null, 
+            false, // closeBox
+            clearPopup);
         popup.autoSize = false;
         map.addPopup(popup);
     },

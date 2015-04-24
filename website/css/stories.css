@@ -8,8 +8,18 @@
     height: 625px;
     margin: 0;
 }
-.map_left { float:left; width:725px; margin:0; padding:0px;}
-.map_right { float:right; width:165px; margin:0; padding:10px;}
+.map_left { 
+    float:left; 
+    width:725px;
+    margin:0;
+    padding:0px;
+}
+.map_right {
+    float:right;
+    width:165px;
+    margin:0;
+    padding:10px;
+}
 #featurePopup {
     pointer-events: none;
 }

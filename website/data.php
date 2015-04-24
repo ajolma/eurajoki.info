@@ -12,12 +12,7 @@
     <?php include "design/include.html"; ?>
 
     <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
-    <style>
-      .ui-datepicker{ z-index: 9999 !important; }
-      .ui-accordion .ui-accordion-content { padding: 0.5em 0.3em; }
-      .ui-widget-content a { color: #69bacb; }
-    </style>
-    <link rel="stylesheet" type="text/css" href="design/data.css" />
+    <link rel="stylesheet" type="text/css" href="css/data.css" />
     
     <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/jquery/excanvas.js"></script><![endif]-->
     <script language="javascript" type="text/javascript" src="/jquery/jquery.js"></script>
@@ -28,39 +23,8 @@
 
     <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
-    <?php 
-echo "<script>";
-if (isset($_GET["raaka"])) {echo "var raaka=1;";}else{echo "var raaka=0;";}
-if (isset($_GET["from"])) {echo "var date0='".$_GET["from"]."';";}else{echo "var date0=0;";}
-if (isset($_GET["to"])) {echo "var date1='".$_GET["to"]."';";}else{echo "var date1=0;";}
-if (isset($_GET["paikka"])) {
-    echo "var locs={";
-    $locs = $_GET['paikka'];
-    $n = count($locs);
-    for($i = 0; $i < $n; $i++) {
-        echo "'".$locs[$i]."': 1";
-        if ($i < $n-1)
-            echo ",";
-    }
-    echo "};";
-} else {
-    echo "var locs={};";
-}
-if (isset($_GET["suure"])) {
-    echo "var vars={";
-    $vars = $_GET['suure'];
-    $n = count($vars);
-    for($i = 0; $i < $n; $i++) {
-        echo "'".$vars[$i]."': 1";
-        if ($i < $n-1)
-            echo ",";
-    }
-    echo "};";
-} else {
-    echo "var vars={};";
-}
-echo "</script>"; 
-?>
+    <?php include "lib/url2js.php"; ?>
+    <script language="javascript" type="text/javascript" src="/app/config.js"></script>
     <script language="javascript" type="text/javascript" src="/app/base-layers.js"></script>
     <script language="javascript" type="text/javascript" src="/app/sensor-layer.js"></script>
     <script language="javascript" type="text/javascript" src="/app/map.js"></script>
@@ -68,7 +32,7 @@ echo "</script>";
     <script language="javascript" type="text/javascript" src="/app/init-data-viewer.js"></script>
   </head>
   <body>
-    <?php include "content/fb-boot.html"; ?>  
+    <?php include "content/fb-boot.html"; ?>
     <div class="main">
       <div class="header_resize">
         <div class="logo"><h1><a href="index.php"><small>&nbsp;</small><br />Eurajoki.info</a></h1></div>
