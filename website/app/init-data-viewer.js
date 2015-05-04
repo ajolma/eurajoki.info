@@ -34,7 +34,7 @@ function init() {
 
     map.addLayers(layers);
 
-    create_controls(sensor_layer, sensor_layer);
+    create_controls(sensor_layer, sensor_layer, {multiple: true, clickout: false});
     
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 

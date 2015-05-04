@@ -22,7 +22,8 @@ function init() {
     layers.push(create_vegetation_layer({visibility: false}));
     map.addLayers(layers);
 
-    create_controls(layers, [story_layer, vegetation_layer], {multiple: false});
+    //create_controls(layers, [story_layer, vegetation_layer], {multiple: false});
+    create_controls(layers, layers, {multiple: false, clickout: true});
 
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 

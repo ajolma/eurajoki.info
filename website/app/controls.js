@@ -3,12 +3,37 @@
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 var blockPopups = false;
-var highlightedFeature = null;
 var hoverControl;
 var selectControl;
+var selectedFeature = null;
+
+function addPopup(text, feature, width, height, select) {
+    var popup = new OpenLayers.Popup.FramedCloud(
+        "featurePopup",
+        feature.geometry.getBounds().getCenterLonLat(),
+        new OpenLayers.Size(width, height),
+        text,
+        null, 
+        select,
+        clearPopup
+    );
+    popup.autoSize = false;
+    map.addPopup(popup, true);
+    if (select) 
+        selectedFeature = feature;
+    else
+        // hack to make this dialog box insensitive to mouse, see related css
+        popup.groupDiv.parentNode.id = 'featurePopup2';
+    blockPopups = select;
+}
 
 function clearPopup() {
     blockPopups = false;
+    if (selectedFeature != null) {
+        var f = selectedFeature;
+        selectedFeature = null; // avoid deep recursion
+        selectControl.unselect(f);
+    }
     var popups = map.popups;
     for (var i = 0; i < popups.length; ++i) {
         map.removePopup(popups[i]);
@@ -18,7 +43,7 @@ function clearPopup() {
 function create_controls(hoverLayers, selectLayers, options) {
 
     if (options == null)
-        options = {multiple: true};
+        options = {multiple: false, clickout: true};
 
     hoverControl = new OpenLayers.Control.SelectFeature(hoverLayers, {
         hover: true,
@@ -29,23 +54,12 @@ function create_controls(hoverLayers, selectLayers, options) {
             clearPopup();
             this.highlight(feature);
             var text = feature.layer.featurePopupText(feature);
-            var popup = new OpenLayers.Popup.FramedCloud(
-                'featurePopup',
-                feature.geometry.getBounds().getCenterLonLat(),
-                new OpenLayers.Size(300, 150),
-                text,
-                null, 
-                false, // closeBox
-                clearPopup);
-            popup.autoSize = false;
-            // hack to make this dialog box insensitive to mouse, see related css
-            popup.groupDiv.parentNode.id = 'featurePopup2';
-            map.addPopup(popup);
+            addPopup(text, feature, 300, 150, false);
         }
     });
     
     selectControl = new OpenLayers.Control.SelectFeature(selectLayers, {
-        clickout: true,
+        clickout: options.clickout,
         toggle: true,
         multiple: options.multiple
     });

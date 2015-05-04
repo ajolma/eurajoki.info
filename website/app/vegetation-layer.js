@@ -47,9 +47,17 @@ function create_vegetation_layer(options) {
         styleMap: styleMap
     });
     
-    vegetation_layer.featurePopupText = function(feature) {
+    vegetation_layer.featurePopupText = function(feature, options) {
+        if (options == null)
+            options = {interactive: false};
+        var f0 = "<b>";
+        var f1 = "</b><br />";
+        if (options.interactive) {
+            f0 = '<h2>';
+            f1 = '</h2>';
+        }
         var fid = feature.attributes.id;
-        var text = "<b>Jokiosuus "+fid+'</b><br />Kasvillisuus: ';
+        var text = f0+"Jokiosuus "+fid+f1+'Kasvillisuus: ';
         if (fid != undefined) {
             var plants = plants_on_river_elements[fid];
             var f = true;
@@ -58,7 +66,10 @@ function create_vegetation_layer(options) {
                     f = false;
                 else
                     text += ', ';
-                text += $("li[id="+plant+"]").html();
+                var kasvi = $("li[id="+plant+"]").html();
+                if (options.interactive)
+                    kasvi = '<a href="http://fi.wikipedia.org/wiki/'+kasvi+'" target="Wikipedia">'+kasvi+'</a>';
+                text += kasvi;
             }
         }
         return text;
@@ -79,11 +90,10 @@ function create_vegetation_layer(options) {
                 $("li[id="+plant+"]", "#selectable").addClass("ui-selected");
                 selected_plants[plant] = 1;
             }
+            var text = vegetation_layer.featurePopupText(feature, {interactive: true});
+            addPopup(text, feature, 300, 200, true);
         },
-        featureunselected: function(obj) {
-            blockPopups = false;
-            clearPopup();
-        }
+        featureunselected: clearPopup
     });
 
     return vegetation_layer;

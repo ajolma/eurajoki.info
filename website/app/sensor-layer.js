@@ -160,9 +160,7 @@ function sync_locations_to_variables() {
     $('#location').val(tmp);
 }
 
-function feature_selection_event(blockPopupsFeature) {
-    if (!selectControl.multiple)
-        blockPopups = !blockPopups;
+function feature_selection_event() {
     if (syncing) return;
     sync_locations_to_features();
     sync_variables();

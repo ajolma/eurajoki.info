@@ -49,45 +49,35 @@ function create_story_layer(options) {
         styleMap: styleMap
     });
 
-    story_layer.featurePopupText = function(feature) {
+    story_layer.featurePopupText = function(feature, options) {
+        if (options == null)
+            options = {interactive: false};
         var text = "";
         if (feature.attributes.id != undefined) {
-            text = '<b>'+feature.attributes.otsikko+'</b><br />'+feature.attributes.story;
+            var form = "";
+            var f0 = "<b>";
+            var f1 = "</b><br />";
+            if (options.interactive) {
+                f0 = '<h2>';
+                f1 = '</h2>';
+                form = 
+                '<form id="PictureForm" method="post" action="'+picture_url+'" target="PictureWindow">'+
+                '<input type="hidden" name="story" value="'+feature.attributes.id+'">'+
+                '<input type="submit" value="Katso tarinaan liittyvät kuvat" onclick="openPictureWindow()">'+
+                '</form>';
+            }
+            text = f0+feature.attributes.otsikko+f1+feature.attributes.story+form;
         }
         return text;
     };
 
     story_layer.events.on({
         featureselected: function(obj) {
-            blockPopups = true;
             var feature = obj.feature;
-            var form = "";
-            var text = "";
-            if (feature.attributes.id != undefined) {
-                form =
-                    '<form id="PictureForm" method="post" action="'+picture_url+'" target="PictureWindow">'+
-                    '<input type="hidden" name="story" value="'+feature.attributes.id+'">'+
-                    '<input type="submit" value="Katso tarinaan liittyvät kuvat" onclick="openPictureWindow()">'+
-                    '</form>';
-                text = '<h2>'+feature.attributes.otsikko+'</h2>'+feature.attributes.story;
-                text += form;
-            }
-            var popup = new OpenLayers.Popup.FramedCloud(
-                "featurePopup",
-                feature.geometry.getBounds().getCenterLonLat(),
-                new OpenLayers.Size(400,300),
-                text,
-                null, 
-                true,
-                clearPopup
-            );
-            popup.autoSize = false;
-            map.addPopup(popup, true);
+            var text = story_layer.featurePopupText(feature, {interactive: true});
+            addPopup(text, feature, 400, 300, true);
         },
-        featureunselected: function(obj) {
-            blockPopups = false;
-            clearPopup();
-        }
+        featureunselected: clearPopup
     });
 
     return story_layer;

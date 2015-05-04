@@ -21,7 +21,7 @@ function init() {
     
     map.addLayers(layers);
 
-    create_controls(story_layer, story_layer);
+    create_controls(story_layer, story_layer, {multiple: false, clickout: true});
 
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
