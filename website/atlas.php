@@ -9,42 +9,58 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="shortcut icon" href="/favicon.ico" /> 
     <meta http-equiv="EXPIRES" content="Wed, 13 Nov 2013 20:00:00 GMT" />
-    <?php include "design/include.html"; ?>
 
+    <?php include "design/include.html"; ?>
     <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" href="css/atlas.css" />
     
     <script language="javascript" type="text/javascript" src="/jquery/jquery.js"></script>
     <script language="javascript" type="text/javascript" src="/jquery/jquery-ui.js"></script>
     
     <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
-    <script type="text/javascript" src="app/base-layers.js"></script>
-    <script type="text/javascript" src="app/overlays.js"></script>
-    <script type="text/javascript" src="app/map.js"></script>
-    <script type="text/javascript" src="app/init-atlas.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/atlas.css" />
+
+    <?php include "lib/url2js.php"; ?>
+    <script language="javascript" type="text/javascript" src="/app/config.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/base-layers.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/controls.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/overlays.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/sensor-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/story-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/vegetation-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/map.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/init-atlas.js"></script>
+    
   </head>
   <body>
     <div class="main">
-      <div class="header_resize">
-        <div class="logo"><h1><a href="index.php"><small>&nbsp;</small><br />Eurajoki.info</a></h1></div>
-        <div class="logo_text"><?php include "content/top-links.html"; ?></div>
-        <div class="clr"></div>
-      </div>
+      <?php include "content/header.html"; ?>
       <div class="headert_text_resize">
         <div class="menu"><?php include "content/topmenu.html"; ?></div>
         <div class="clr"></div>
       </div>
       <div class="body">
-        <button id="opener">Kasvillisuusvalinnat</button>
+        
         <div id="dialog" title="Kasvillisuus">
           <ol id="selectable"></ol>
         </div>
 
-        <div id="map">
-        </div>
-        <?php include "content/footer.html"; ?>
+        <table id="atlas_layout" style="width:100%"><tbody><tr><td><div id="map"></div></td><td width=175px valign="top">
+                <h3>Karttatasot</h3>
+                <div class="map_overlays"></div>
+                <h3>Taustakartta</h3>
+                <div class="backgroundmap"></div>
+                <br />
+                <?php include "content/vegetation_panel.html"; ?>
+                <?php include "content/stories_panel.html"; ?>
+                <?php include "content/sensors_panel.html"; ?>
+                <?php include "content/aerial_photos_panel.html"; ?>
+                <?php include "content/basemap_1962_panel.html"; ?>
+                <?php include "content/senate_maps_panel.html"; ?>
+        </td></tr></tbody></table>
+
       </div>
+      <?php include "content/footer.html"; ?>
     </div>
   </body>
 </html>

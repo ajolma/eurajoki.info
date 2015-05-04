@@ -2,15 +2,12 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
-var overlay_server = 'ajolma.net';
-var river_layer = null;
-
 function overlays() {
 
     var ilmakuvat = new OpenLayers.Layer.TMS("Ilmakuvat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: 'http://'+overlay_server+'/Eurajoki/aerial-images/tiles.pl/',
+        myUrl: overlay_url+'/aerial-images/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -21,7 +18,7 @@ function overlays() {
     var perus62 = new OpenLayers.Layer.TMS("Peruskartta 1962", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: 'http://'+overlay_server+'/Eurajoki/peruskartat_1962/tiles.pl/',
+        myUrl: overlay_url+'/peruskartat_1962/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -32,7 +29,7 @@ function overlays() {
     var senaatin = new OpenLayers.Layer.TMS("Senaatin kartat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: 'http://'+overlay_server+'/Eurajoki/senaatin_kartat/tiles.pl/',
+        myUrl: overlay_url+'/senaatin_kartat/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -58,26 +55,7 @@ function overlays() {
         temporary: new OpenLayers.Style(new MyStyle("yellow","star"))
     });
 
-    var server = 'localhost';
-    var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
-    river_layer = new OpenLayers.Layer.Vector("Kasvillisuus", {
-        strategies: [
-            new OpenLayers.Strategy.BBOX(),
-            new OpenLayers.Strategy.Fixed()
-        ],
-        protocol: new OpenLayers.Protocol.WFS.v1_1_0({
-            version: "1.1.0",
-            srsName: "EPSG:3857",
-            url: wfs_server,
-            featureType: "local.jokipalat.geom",
-            outputFormat: "GML2"
-        }),
-        visibility: true,
-        extractAttributes: true,
-        styleMap: styleMap
-    });
-
-    return [ilmakuvat,perus62,senaatin,river_layer];
+    return [senaatin,perus62,ilmakuvat];
 }
 
 function getURL(bounds) {

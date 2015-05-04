@@ -4,12 +4,6 @@
 
 var storiesLayer = null;
 var saveStrategy;
-var server = 'ajolma.net';
-//var server = '54.247.187.88';
-//var server = 'localhost';
-var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
-var story_server = 'http://'+server+'/Eurajoki/stories.pl';
-var picture_server = 'http://'+server+'/Eurajoki/files.pl';
 var popup = null;
 var drawControls = null;
 
@@ -25,11 +19,6 @@ function clearPopup() {
 function openStoryWindow() {
     window.open('', 'StoryWindow', 'width=830,height=660,status=yes,resizable=yes,scrollbars=yes');
     document.getElementById('StoryForm').submit();
-}
-
-function openPictureWindow() {
-    window.open('', 'PictureWindow', 'width=980,height=660,status=yes,resizable=yes,scrollbars=yes');
-    document.getElementById('PictureForm').submit();
 }
 
 function new_identity() {
@@ -60,8 +49,8 @@ function new_identity() {
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({
             version: "1.1.0",
             srsName: "EPSG:3857",
-            url: wfs_server,
-            featureType: "ej.tarinat.geom",
+            url: story_wfs_url,
+            featureType: stories_prefix+".tarinat.geom",
             outputFormat: "GML2"
         }),
         filter: new OpenLayers.Filter.Logical({
@@ -103,17 +92,17 @@ function new_identity() {
                         '<input type="hidden" name="password" value="'+password+'">'+
                         '<input type="hidden" name="story" value="'+feature.attributes.id+'">';
                     var storyForm = 
-                        '<form id="StoryForm" method="post" action="'+story_server+'" target="StoryWindow">'+
+                        '<form id="StoryForm" method="post" action="'+story_url+'" target="StoryWindow">'+
                         formCommon+
                         '<input type="submit" value="Muokkaa tarinaa" onclick="openStoryWindow()">'+
                         '</form>';
                     var pictureForm =
-                        '<form id="PictureForm" method="post" action="'+picture_server+'" target="PictureWindow">'+
+                        '<form id="PictureForm" method="post" action="'+picture_url+'" target="PictureWindow">'+
                         formCommon+
                         '<input type="submit" value="Katso tarinaan liittyvät kuvat" onclick="openPictureWindow()">'+
                         '</form>';
                     var delForm =
-                        '<form id="PictureForm" method="post" action="'+story_server+'" target="StoryWindow">'+
+                        '<form id="DeleteForm" method="post" action="'+story_url+'" target="StoryWindow">'+
                         formCommon+
                         '<input type="hidden" name="cmd" value="del">'+
                         '<input type="submit" value="Poista tarina" onclick="openStoryWindow()">'+

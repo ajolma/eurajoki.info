@@ -23,22 +23,20 @@
 
     <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
+
     <?php include "lib/url2js.php"; ?>
     <script language="javascript" type="text/javascript" src="/app/config.js"></script>
     <script language="javascript" type="text/javascript" src="/app/base-layers.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/controls.js"></script>
     <script language="javascript" type="text/javascript" src="/app/sensor-layer.js"></script>
     <script language="javascript" type="text/javascript" src="/app/map.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/hover.js"></script>
     <script language="javascript" type="text/javascript" src="/app/init-data-viewer.js"></script>
+
   </head>
   <body>
     <?php include "content/fb-boot.html"; ?>
     <div class="main">
-      <div class="header_resize">
-        <div class="logo"><h1><a href="index.php"><small>&nbsp;</small><br />Eurajoki.info</a></h1></div>
-        <div class="logo_text"><?php include "content/top-links.html"; ?></div>
-        <div class="clr"></div>
-      </div>
+      <?php include "content/header.html"; ?>
       <div class="headert_text_resize">
         <div class="menu"><?php include "content/topmenu.html"; ?></div>
         <div class="clr"></div>

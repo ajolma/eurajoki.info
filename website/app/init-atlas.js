@@ -3,48 +3,28 @@
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 var map = null;
-var select_river_elements = null;
-var plants_on_river_elements = null;
-var selected_plants = {};
-var select_river_element_flag = 0;
 
 function init() {
+
+    OpenLayers.IMAGE_RELOAD_ATTEMPTS = 3;
 
     map = make_map();
 
     var layers = taustakartat();
     map.addLayers(layers);
+
+    layers = overlays();
+    map.addLayers(layers);
+
+    layers = [];
+    layers.push(create_sensor_layer({visibility: false}));
+    layers.push(create_story_layer({visibility: false}));
+    layers.push(create_vegetation_layer({visibility: false}));
+    map.addLayers(layers);
+
+    create_controls(layers, [story_layer, vegetation_layer], {multiple: false});
+
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
-
-    OpenLayers.IMAGE_RELOAD_ATTEMPTS = 3;
-
-    var overlayers = overlays();
-    
-    map.addLayers(overlayers);
-
-    var sw = map.getControl("OpenLayers_Control_LayerSwitcher_4");
-    sw.maximizeControl();
-
-    select_river_elements = new OpenLayers.Control.SelectFeature(river_layer, {
-        eventListeners: {
-            featurehighlighted: function (evt) {
-                if (select_river_element_flag) {
-                    return;
-                }
-                var feature = evt.feature;
-                var fid = feature.attributes["id"];
-                var plants = plants_on_river_elements[fid];
-                $("li", "#selectable").removeClass("ui-selected");
-                selected_plants = {};
-                for (plant in plants) {
-                    $("li[id="+plant+"]", "#selectable").addClass("ui-selected");
-                    selected_plants[plant] = 1;
-                }
-            }
-        }
-    });
-    map.addControl(select_river_elements);
-    select_river_elements.activate();
 
 }
 
@@ -55,42 +35,27 @@ function onPlantsReceived(param) {
     });
 }
 
-function update_river() {
-    for (var i = 0; i < river_layer.features.length; ++i) {
-        var f = river_layer.features[i];
-        var fid = f.attributes["id"];
-        var plants = plants_on_river_elements[fid];
-        var sel = 0;
-        if (plants) {
-            for (plant in selected_plants) {
-                if (plants[plant]) {
-                    select_river_element_flag = 1;
-                    select_river_elements.select(f);
-                    select_river_element_flag = 0;
-                    sel = 1;
-                }
-            }
-        }
-        if (sel == 0) {
-            select_river_elements.unselect(f);
-        }
-    }
+function window_resize() {
+    var viewHeight = $(window).height();
+    var contentHeight = viewHeight - 
+        $('.header_resize').outerHeight() - 
+        $('.headert_text_resize').outerHeight() - 
+        $('.footer').outerHeight() - 5 - 5 - 0 - 4 - 2; // body.padding & border-top & table.border-spacing & extra
+        $('.olMap').height(contentHeight);
+    map.updateSize();
 }
 
 $(function() {
 
-    var data_server = 'localhost';
-    var server = 'http://'+data_server+'/Eurajoki/data.pl?';
-
     $.ajax({
-	url: server+'request=GetPlants',
+	url: vegetation_url+'request=GetPlants',
 	type: "GET",
 	dataType: "json",
 	success: onPlantsReceived
     });
     
     $.ajax({
-	url: server+'request=GetPlantsOnRiver',
+	url: vegetation_url+'request=GetPlantsOnRiver',
 	type: "GET",
 	dataType: "json",
 	success: function(param) {
@@ -106,11 +71,11 @@ $(function() {
     $( "#selectable" ).selectable({
         selected: function( event, ui ) {
             selected_plants[ui.selected.id] = 1;
-            update_river();
+            update_vegetation_layer();
         },
         unselected: function( event, ui ) {
             delete selected_plants[ui.unselected.id];
-            update_river();
+            update_vegetation_layer();
         }
         
     });
@@ -121,4 +86,84 @@ $(function() {
 
     init();
 
+    var panels = {
+        vegetation: "Kasvillisuus",
+        stories: "Tarinat",
+        sensors: "Mittauskohteet",
+        aerial_photos: "Ilmakuvat",
+        basemap_1962: "Peruskartta 1962",
+        senate_maps: "Senaatin kartat"
+    };
+
+    for (var panel in panels) {
+        $('#'+panel+'_panel').accordion({collapsible: true});
+        $('#'+panel+'_panel').hide();
+    }
+
+    var layers = "";
+    for (var i = map.layers.length-1; i >= 0; i--) {
+        var l = map.layers[i];
+        if (l.isBaseLayer) continue;
+        if (!l.displayInLayerSwitcher) continue;
+        var n = l.name;
+        layers += "<input type=\"checkbox\" class=\"serialcheck\" value=\""+n+"\">"+n+"</input><br />";
+    }
+    $('.map_overlays').html(layers);
+
+    $(".map_overlays input.serialcheck").click(function(){
+        clearPopup();
+        var e = $(this);
+        var n = e.val();
+        var panel = null;
+        for (var p in panels) {
+            if (n == panels[p]) {
+                panel = $('#'+p+'_panel');
+                break;
+            }
+        }
+        for (var i = 0; i < map.layers.length; ++i) {
+            var l = map.layers[i];
+            if (l.name == n) {
+                if (e[0].checked) {
+                    panel.show();
+                    l.setVisibility(true);
+                } else {
+                    panel.hide();
+                    l.setVisibility(false);
+                }
+                break;
+            }
+        }
+    });
+
+    layers = "";
+    var j = 0;
+    for (var i = 0; i < map.layers.length; ++i) {
+        var l = map.layers[i];
+        if (!l.isBaseLayer) continue;
+        j++;
+        var n = l.name;
+        var c = '';
+        if (j == 1) c = 'checked';
+        layers += "<input type=\"radio\" name=\"bgmap\" class=\"serialcheck\" value=\""+n+"\" "+c+">"+n+"</input><br />";
+    }
+    $('.backgroundmap').html(layers);
+
+    $(".backgroundmap input.serialcheck").click(function(){
+        var e = $(this);
+        var n = e.val();
+        for (var i = 0; i < map.layers.length; ++i) {
+            var l = map.layers[i];
+            if (l.name == n) {
+                if (e[0].checked) {
+                    map.setBaseLayer(l);
+                }
+                break;
+            }
+        }
+    });
+
+    $(window).resize(window_resize);
+    window_resize();
+    
 });

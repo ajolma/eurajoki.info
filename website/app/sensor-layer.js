@@ -2,27 +2,14 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
-var mittarit; // created by mittaritLayer() in init()
+var sensor_layer;
+var sensor_graphic = "star";
+
 var datasets; // set to received data in jquery initialization
 var variables; // set to received data in jquery initialization
-var selectControl;
-var hoverControl;
-var hoverControl2;
 var syncing = false;
 var selected_variables = {};
 var selected_locations = {};
-
-MyStyle = function(color,graphic) {
-    this.fillOpacity = 0.2;
-    this.graphicOpacity = 1;
-    this.strokeColor = color;
-    this.fillColor = color;
-    this.graphicName = graphic;
-    this.pointRadius = 10;
-    this.strokeWidth = 3;
-    this.rotation = 45;
-    this.strokeLinecap = "butt";
-};
 
 function cmp_date(a,b) {
     for (var i=0; i<3; i++) {
@@ -139,9 +126,10 @@ function sync_variables() { // to locations
 }
 
 function sync_locations_to_features() {
+    if (datasets == null) return;
     var koodit = [];
     selected_locations = {};
-    $.each(mittarit.selectedFeatures, function(i, feature) {
+    $.each(sensor_layer.selectedFeatures, function(i, feature) {
         var dataset = datasets[feature.attributes.koodi];
         if (dataset != null) {
             koodit.push(dataset.koodi);
@@ -172,7 +160,9 @@ function sync_locations_to_variables() {
     $('#location').val(tmp);
 }
 
-function feature_selection_event() {
+function feature_selection_event(blockPopupsFeature) {
+    if (!selectControl.multiple)
+        blockPopups = !blockPopups;
     if (syncing) return;
     sync_locations_to_features();
     sync_variables();
@@ -186,7 +176,7 @@ function sync_features_to_locations() {
     selectControl.unselectAll();
     $("#location :selected").each(function() {
         var koodi = $(this).val();
-        $.each(mittarit.features, function(i, feature) {
+        $.each(sensor_layer.features, function(i, feature) {
             if (feature.attributes.koodi == koodi)
                 selectControl.select(feature);
         });
@@ -195,6 +185,7 @@ function sync_features_to_locations() {
 }
 
 function selectLocation() {
+    clearPopup();
     // only sync variables if a new selection
     var new_selection = true;
     var new_selected_locations = {};
@@ -232,15 +223,30 @@ function selectVariable() {
     variables_info();
 }
 
-function mittaritLayer(layers) {
+function create_sensor_layer(options) {
+
+    if (options == null)
+        options = {visibility: true};
+
+    var MyStyle = function(color,graphic) {
+        this.fillOpacity = 0.2;
+        this.graphicOpacity = 1;
+        this.strokeColor = color;
+        this.fillColor = color;
+        this.graphicName = graphic;
+        this.pointRadius = 10;
+        this.strokeWidth = 3;
+        this.rotation = 45;
+        this.strokeLinecap = "butt";
+    };
 
     var styleMap = new OpenLayers.StyleMap({
-        "default": new OpenLayers.Style(new MyStyle("blue","star")),
-        select: new OpenLayers.Style(new MyStyle("red","star")),
-        temporary: new OpenLayers.Style(new MyStyle("yellow","star"))
+        'default':   new OpenLayers.Style(new MyStyle("blue",  sensor_graphic)),
+        'select':    new OpenLayers.Style(new MyStyle("red",   sensor_graphic)),
+        'temporary': new OpenLayers.Style(new MyStyle("yellow", sensor_graphic))
     });
     
-    mittarit = new OpenLayers.Layer.Vector("Mittauskohteet", {
+    sensor_layer = new OpenLayers.Layer.Vector("Mittauskohteet", {
         strategies: [
             new OpenLayers.Strategy.BBOX(),
             new OpenLayers.Strategy.Fixed()
@@ -248,43 +254,27 @@ function mittaritLayer(layers) {
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({
             version: "1.1.0",
             srsName: "EPSG:3857",
-            url: wfs_server,
-            featureType: mittarit_prefix+".mittauskohteet.geom",
+            url: wfs_url,
+            featureType: sensor_layer_prefix+".mittauskohteet.geom",
             outputFormat: "GML2"
         }),
-        visibility: true,
+        visibility: options.visibility,
         extractAttributes: true,
         styleMap: styleMap
     });
 
-    mittarit.events.on({
+    sensor_layer.featurePopupText = function(feature) {
+        var text = "";
+        if (feature.attributes.id != undefined) {
+            text = '<b>'+feature.attributes.nimike+'</b><br />'+feature.attributes.info;
+        }
+        return text;
+    };
+
+    sensor_layer.events.on({
         featureselected: feature_selection_event,
         featureunselected: feature_selection_event
     });
 
-    layers.push(mittarit);
-}
-
-function createControlsForMittarit(map) {
-    selectControl = new OpenLayers.Control.SelectFeature(mittarit, {
-        clickout: false,
-        toggle: true,
-        multiple: true
-    });
-    
-    hoverControl = new OpenLayers.Control.SelectFeature(mittarit, {
-        hover: true,
-        highlightOnly: true,
-        renderIntent: "temporary"
-    });
-
-    hoverControl2 = new OpenLayers.Control.OverFeature(mittarit);
-    
-    map.addControl(hoverControl);
-    map.addControl(hoverControl2);
-    map.addControl(selectControl);
-    hoverControl.activate();
-    hoverControl2.activate();
-    selectControl.activate();
-    
+    return sensor_layer;
 }

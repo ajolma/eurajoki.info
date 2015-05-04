@@ -9,28 +9,29 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="shortcut icon" href="/favicon.ico" /> 
     <meta http-equiv="EXPIRES" CONTENT="Wed, 13 Nov 2013 20:00:00 GMT" />
+
     <?php include "design/include.html"; ?>
+    <link rel="stylesheet" type="text/css" href="css/stories.css" />
+
     <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
-    <?php echo "<script>";
-          if (isset($_GET["editor"])) {echo "var editor=1;";}else{echo "var editor=0;";}
-          echo "</script>"; ?>
-    <script type="text/javascript" src="app/identity.js"></script>
-    <script type="text/javascript" src="app/story-editor.js"></script>
-    <script type="text/javascript" src="app/base-layers.js"></script>
-    <script type="text/javascript" src="app/overlays.js"></script>
-    <script type="text/javascript" src="app/map.js"></script>
-    <script type="text/javascript" src="app/init-stories.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/stories.css" />
+
+    <?php include "lib/url2js.php"; ?>
+    <script language="javascript" type="text/javascript" src="/app/config.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/identity.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/story-editor.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/base-layers.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/controls.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/overlays.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/story-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/map.js"></script>
+    <script language="javascript" type="text/javascript" src="/app/init-stories.js"></script>
+    
   </head>
   <body onload="init()">
     <?php include "content/fb-boot.html"; ?>
     <div class="main">
-      <div class="header_resize">
-        <div class="logo"><h1><a href="index.php"><small>&nbsp;</small><br />Eurajoki.info</a></h1></div>
-        <div class="logo_text"><?php include "content/top-links.html"; ?></div>
-        <div class="clr"></div>
-      </div>
+      <?php include "content/header.html"; ?>
       <div class="headert_text_resize">
         <div class="menu"><?php include "content/topmenu.html"; ?></div>
         <div class="clr"></div>

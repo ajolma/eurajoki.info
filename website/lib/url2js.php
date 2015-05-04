@@ -41,5 +41,10 @@ if (isset($_GET["suure"])) {
 } else {
     echo "var vars={};";
 }
+if (isset($_GET["editor"])) {
+    echo "var editor=1;";
+} else {  
+    echo "var editor=0;";
+}
 echo "</script>"; 
 ?>

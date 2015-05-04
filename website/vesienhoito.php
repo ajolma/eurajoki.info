@@ -15,11 +15,7 @@
   <body>
     <?php include "content/fb-boot.html"; ?>
     <div class="main">
-      <div class="header_resize">
-        <div class="logo"><h1><a href="index.php"><small>&nbsp;</small><br />Eurajoki.info</a></h1></div>
-        <div class="logo_text"><?php include "content/top-links.html"; ?></div>
-        <div class="clr"></div>
-      </div>
+      <?php include "content/header.html"; ?>
       <div class="headert_text_resize">
         <div class="menu"><?php include "content/topmenu.html"; ?></div>
       </div>

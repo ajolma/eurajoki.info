@@ -3,8 +3,6 @@
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 var map;
-var wfs_server = 'http://'+server+'/Eurajoki/wfs.pl';
-var sos_server = 'http://'+server+'/Eurajoki/m5json.pl?raaka='+raaka+'&';
 var auto_plot = 0;
 
 function init() {
@@ -27,16 +25,16 @@ function init() {
 	showMonthAfterYear: false, // True if the year select precedes month, false for month then year
 	yearSuffix: "" // Additional text to append to the year in the month headers
     });
+
+    map = make_map();
     
     var layers = taustakartat();
     
-    mittaritLayer(layers);
-
-    map = make_map();
+    layers.push(create_sensor_layer());
 
     map.addLayers(layers);
 
-    createControlsForMittarit(map);
+    create_controls(sensor_layer, sensor_layer);
     
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
@@ -138,7 +136,7 @@ function plot() {
         get += '&paikka='+v;
         php_get += '&paikka%5B%5D='+v;
     });
-    var data_get = sos_server+'request=GetDataset'+'&max=5000&'+get;
+    var data_get = sos_url+'request=GetDataset'+'&max=5000&'+get;
     var page_get = '/data.php?'+php_get;
     $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
     $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a> (kopiointia varten) <font color="gray">(linkki on hieman rikki: linkistä avautuvalla sivulla paikat eivät tulee valituiksi kartalla)</font>');
@@ -154,14 +152,14 @@ function plot() {
 $(function() {
 
     $.ajax({
-	url: sos_server+'request=GetDatasets',
+	url: sos_url+'request=GetDatasets',
 	type: "GET",
 	dataType: "json",
 	success: onDatasetsReceived
     });
     
     $.ajax({
-	url: sos_server+'request=GetVariables',
+	url: sos_url+'request=GetVariables',
 	type: "GET",
 	dataType: "json",
 	success: onVariablesReceived
