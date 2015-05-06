@@ -7,27 +7,35 @@ var hoverControl;
 var selectControl;
 var selectedFeature = null;
 
-function addPopup(text, feature, width, height, select) {
+function addPopup(feature, contents) {
+    if (contents == null) contents = {};
+    contents.width = typeof contents.width !== 'undefined' ? contents.width : 350;
+    contents.height = typeof contents.height !== 'undefined' ? contents.height : 200;
+    contents.select = typeof contents.select !== 'undefined' ? contents.select : false;
     var popup = new OpenLayers.Popup.FramedCloud(
         "featurePopup",
         feature.geometry.getBounds().getCenterLonLat(),
-        new OpenLayers.Size(width, height),
-        text,
+        new OpenLayers.Size(contents.width, contents.height),
+        '<h2>'+contents.title+'</h2>'+contents.body,
         null, 
-        select,
+        contents.select,
         clearPopup
     );
     popup.autoSize = false;
     map.addPopup(popup, true);
-    if (select) 
+    if (contents.select) 
         selectedFeature = feature;
     else
         // hack to make this dialog box insensitive to mouse, see related css
         popup.groupDiv.parentNode.id = 'featurePopup2';
-    blockPopups = select;
+    blockPopups = contents.select;
 }
 
-function clearPopup() {
+function clearPopup(options) {
+    if (options == null) options = {};
+    options.force = typeof options.force !== 'undefined' ? options.force : 2; // 1 only temps, 2 all
+    if (options.force == 1 && blockPopups)
+        return;
     blockPopups = false;
     if (selectedFeature != null) {
         var f = selectedFeature;
@@ -53,8 +61,8 @@ function create_controls(hoverLayers, selectLayers, options) {
             if (blockPopups) return;
             clearPopup();
             this.highlight(feature);
-            var text = feature.layer.featurePopupText(feature);
-            addPopup(text, feature, 300, 150, false);
+            var contents = feature.layer.featurePopupText(feature);
+            addPopup(feature, contents);
         }
     });
     

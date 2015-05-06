@@ -50,29 +50,35 @@ function create_vegetation_layer(options) {
     vegetation_layer.featurePopupText = function(feature, options) {
         if (options == null)
             options = {interactive: false};
-        var f0 = "<b>";
-        var f1 = "</b><br />";
-        if (options.interactive) {
-            f0 = '<h2>';
-            f1 = '</h2>';
-        }
         var fid = feature.attributes.id;
-        var text = f0+"Jokiosuus "+fid+f1+'Kasvillisuus: ';
-        if (fid != undefined) {
-            var plants = plants_on_river_elements[fid];
-            var f = true;
-            for (plant in plants) {
-                if (f)
-                    f = false;
-                else
-                    text += ', ';
-                var kasvi = $("li[id="+plant+"]").html();
-                if (options.interactive)
-                    kasvi = '<a href="http://fi.wikipedia.org/wiki/'+kasvi+'" target="Wikipedia">'+kasvi+'</a>';
-                text += kasvi;
+        var body = '<div style="">Kasvillisuus: ';
+        var plants = plants_on_river_elements[fid];
+        var f = true;
+        for (plant in plants) {
+            if (f)
+                f = false;
+            else
+                body += ', ';
+            var kasvi = $("li[id="+plant+"]").html();
+            var hakusana = $("li[id="+plant+"]").attr('hakusana');
+            if (options.interactive) {
+                var href = "http://fi.wikipedia.org/wiki/";
+                var tag = 'wikipedia_vegetation';
+                var a0 = ' class="'+tag+' cboxElement"';
+                a0 += ' style="color:#0000ff; cursor:pointer"';
+                a0 += ' data-cbox-width="75%"';
+                a0 += ' data-cbox-height="75%"';
+                var on_open = ' onclick="$.colorbox({';
+                var on_close = '});"';
+                var json_href = "href:'"+href;
+                var json = ', iframe:true, opacity:0.6';
+                json += ", width:'75%', height:'75%'";
+                kasvi = "<span"+a0+"'"+on_open+json_href+hakusana+"'"+json+on_close+">"+hakusana+"</span>";
             }
+            body += kasvi;
         }
-        return text;
+        body += "</div>";
+        return {title:"Jokiosuus "+fid, body:body};
     };
 
     vegetation_layer.events.on({
@@ -90,8 +96,9 @@ function create_vegetation_layer(options) {
                 $("li[id="+plant+"]", "#selectable").addClass("ui-selected");
                 selected_plants[plant] = 1;
             }
-            var text = vegetation_layer.featurePopupText(feature, {interactive: true});
-            addPopup(text, feature, 300, 200, true);
+            var contents = vegetation_layer.featurePopupText(feature, {interactive: true});
+            contents.select = true;
+            addPopup(feature, contents);
         },
         featureunselected: clearPopup
     });
@@ -102,7 +109,7 @@ function create_vegetation_layer(options) {
 function update_vegetation_layer() {
     for (var i = 0; i < vegetation_layer.features.length; ++i) {
         var f = vegetation_layer.features[i];
-        var fid = f.attributes["id"];
+        var fid = f.attributes.id;
         var plants = plants_on_river_elements[fid];
         var sel = 0;
         if (plants) {

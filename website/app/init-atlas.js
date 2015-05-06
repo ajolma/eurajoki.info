@@ -27,11 +27,16 @@ function init() {
 
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
+    map.events.register('mouseout', map, function (e) {
+        if (e.toElement.nodeName == "TD")
+            clearPopup({force:1});
+    });
+
 }
 
 function onPlantsReceived(param) {
     $.each(param, function(i, name) {
-        var html = '<li class="ui-state-default" id="'+i+'">'+name+'</li>';
+        var html = '<li class="ui-state-default" id="'+i+'" hakusana="'+name[1]+'">'+name[0]+'</li>';
         $("#selectable").append(html);
     });
 }

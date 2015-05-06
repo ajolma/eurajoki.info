@@ -10,6 +10,13 @@ function openPictureWindow() {
     document.getElementById('PictureForm').submit();
 }
 
+function parseArray(arrStr) {
+    var x = arrStr.substring(1, arrStr.length - 1);
+    x = x.replace(/^\d+:/, "");
+    var l = x.split(",");
+    return l;
+}
+
 function create_story_layer(options) {
     
     if (options == null)
@@ -41,7 +48,7 @@ function create_story_layer(options) {
             version: "1.1.0",
             srsName: "EPSG:3857",
             url: story_wfs_url,
-            featureType: stories_prefix+".public_tarinat.geom",
+            featureType: stories_prefix+".public_tarinat2.geom",
             outputFormat: "GML2"
         }),
         visibility: options.visibility,
@@ -52,30 +59,50 @@ function create_story_layer(options) {
     story_layer.featurePopupText = function(feature, options) {
         if (options == null)
             options = {interactive: false};
-        var text = "";
-        if (feature.attributes.id != undefined) {
-            var form = "";
-            var f0 = "<b>";
-            var f1 = "</b><br />";
-            if (options.interactive) {
-                f0 = '<h2>';
-                f1 = '</h2>';
-                form = 
-                '<form id="PictureForm" method="post" action="'+picture_url+'" target="PictureWindow">'+
-                '<input type="hidden" name="story" value="'+feature.attributes.id+'">'+
-                '<input type="submit" value="Katso tarinaan liittyvät kuvat" onclick="openPictureWindow()">'+
-                '</form>';
+        var body = feature.attributes.story + '<br /> <br />';
+        if (options.interactive && feature.attributes.kuvia > 0) {
+            var href = "http://ajolma.net/Eurajoki/files.pl?pic=";
+            var tag = 'story_image';
+            var a0 = ' class="'+tag+' cboxElement" rel="'+tag+'" data-cbox-rel="'+tag+'"';
+            a0 += ' data-cbox-photo="true"';
+            a0 += ' data-cbox-width="75%"';
+            a0 += ' data-cbox-height="75%"';
+            var a1 = a0+' style="display:none"';
+            a0 += ' style="color:#0000ff; cursor:pointer"';
+            var div_href = " href='"+href;
+            a0 += div_href;
+            a1 += div_href;
+            var on_open = ' onclick="$.colorbox({';
+            var on_close = '});"';
+            var json_tag = "rel:'"+tag+"'";
+            var json_href = ", href:'"+href;
+            var json = ', photo:true, opacity:0.6';
+            json += ", width:'75%', height:'75%'";
+            var lbl;
+            if (feature.attributes.kuvia == 1)
+                lbl = "Katso kuva.";
+            else if (feature.attributes.kuvia > 1)
+                lbl = 'Katso kuvat.';
+            var ids = parseArray(feature.attributes.kuvat);
+            var a = a0;
+            for (var i = 0; i < ids.length; i++) {
+                body += "<div"+a+ids[i]+"'"+on_open+json_tag+json_href+ids[i]+"'"+json+on_close+">"+lbl+"</div>";
+                a = a1;
+                lbl = "";
             }
-            text = f0+feature.attributes.otsikko+f1+feature.attributes.story+form;
-        }
-        return text;
+        } else if (feature.attributes.kuvia == 1)
+            body += "Tarinaan liittyy yksi kuva.";
+        else if (feature.attributes.kuvia > 1)
+            body += "Tarinaan liittyy "+feature.attributes.kuvia+" kuvaa.";
+        return {title:feature.attributes.otsikko, body:body, height : 250};
     };
 
     story_layer.events.on({
         featureselected: function(obj) {
             var feature = obj.feature;
-            var text = story_layer.featurePopupText(feature, {interactive: true});
-            addPopup(text, feature, 400, 300, true);
+            var contents = story_layer.featurePopupText(feature, {interactive: true});
+            contents.select = true;
+            addPopup(feature, contents);
         },
         featureunselected: clearPopup
     });

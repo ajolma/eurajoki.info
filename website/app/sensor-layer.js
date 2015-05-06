@@ -262,11 +262,7 @@ function create_sensor_layer(options) {
     });
 
     sensor_layer.featurePopupText = function(feature) {
-        var text = "";
-        if (feature.attributes.id != undefined) {
-            text = '<b>'+feature.attributes.nimike+'</b><br />'+feature.attributes.info;
-        }
-        return text;
+        return {title:feature.attributes.nimike, body:feature.attributes.info, width : 250, height : 150};
     };
 
     sensor_layer.events.on({
