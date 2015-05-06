@@ -2,9 +2,9 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
-var email;
-var password;
-var set_identity_callback;
+var email = '';
+var password = '';
+var set_identity_callback = undefined;
 
 function identity_form() {
     var form = "<fieldset>"+
@@ -22,12 +22,12 @@ function identity_form() {
 function set_identity() {
     email = document.getElementById('identity_email').value;
     password = document.getElementById('identity_password').value;
-    if (set_identity_callback != undefined) {
-        set_identity_callback();
-    }
     if (email == '' || password == '') {
         identity_form()
     } else {
+        if (set_identity_callback != undefined) {
+            set_identity_callback();
+        }
         var form = "<fieldset>"+
             "Olet tunnistautunut osoitteella "+email+"<br />"+
             "<input type='submit' value='Poista tunnistautuminen' onclick='forget_identity()' />"+
@@ -37,8 +37,8 @@ function set_identity() {
 }
 
 function forget_identity() {
-    email = undefined;
-    password = undefined;
+    email = '';
+    password = '';
     if (set_identity_callback != undefined) {
         set_identity_callback();
     }

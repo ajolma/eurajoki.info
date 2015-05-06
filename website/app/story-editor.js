@@ -148,13 +148,7 @@ function new_identity() {
 
     map.addControl(drawControls.point);
 
-    for (var i = 0; i < map.layers.length; ++i) {
-        var l = map.layers[i];
-        if (l.name == "Tarinat") {
-            l.setVisibility(false);
-            break;
-        }
-    }
+    story_layer.setVisibility(email == '' || password == '');
     
 }
 
