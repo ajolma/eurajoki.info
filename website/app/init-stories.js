@@ -25,4 +25,9 @@ function init() {
 
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
+    map.events.register('mouseout', map, function (e) {
+        if (e.toElement && e.toElement.nodeName == "DIV")
+            clearPopup({force:1});
+    });
+
 }

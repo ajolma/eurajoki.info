@@ -2,19 +2,10 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
-var storiesLayer = null;
+var editorLayer = null;
+var editorGraphic = "x";
 var saveStrategy;
-var popup = null;
 var drawControls = null;
-
-function clearPopup() {
-    if (popup != null){
-        map.removePopup(popup);
-        popup.destroy();
-        delete popup;
-        popup = null;
-    }
-}
 
 function openStoryWindow() {
     window.open('', 'StoryWindow', 'width=830,height=660,status=yes,resizable=yes,scrollbars=yes');
@@ -30,17 +21,36 @@ function new_identity() {
         }
     }
 
-    if (storiesLayer != null) {
+    if (editorLayer != null) {
         clearPopup();
-        map.removeLayer(storiesLayer);
+        map.removeLayer(editorLayer);
     }
 
     if (drawControls != null) {
         map.removeControl(drawControls.point);
     }
 
+    var MyStyle = function(color,graphic) {
+        this.fillOpacity = 0.2;
+        this.graphicOpacity = 1;
+        this.strokeColor = color;
+        this.fillColor = color;
+        this.graphicName = graphic;
+        this.pointRadius = 10;
+        this.strokeWidth = 3;
+        //this.rotation = 45;
+        this.strokeLinecap = "butt";
+    };
+    
+    var styleMap = new OpenLayers.StyleMap({
+        'default':   new OpenLayers.Style(new MyStyle("blue",   editorGraphic)),
+        'select':    new OpenLayers.Style(new MyStyle("red",    editorGraphic)),
+        'temporary': new OpenLayers.Style(new MyStyle("yellow", editorGraphic))
+    });
+
     saveStrategy = new OpenLayers.Strategy.Save();
-    storiesLayer = new OpenLayers.Layer.Vector("Omat kohteet", {
+
+    editorLayer = new OpenLayers.Layer.Vector("Omat kohteet", {
         strategies: [
             new OpenLayers.Strategy.BBOX(),
             //new OpenLayers.Strategy.Fixed,
@@ -70,11 +80,11 @@ function new_identity() {
         }),
         visibility: true,
         extractAttributes: true,
-        //styleMap: styleMap
+        styleMap: styleMap
     });
-    map.addLayer(storiesLayer);
+    map.addLayer(editorLayer);
 
-    hoverControl = new OpenLayers.Control.SelectFeature(storiesLayer, {
+    hoverControl = new OpenLayers.Control.SelectFeature(editorLayer, {
         hover: true,
         highlightOnly: true,
         renderIntent: "temporary",
@@ -82,11 +92,10 @@ function new_identity() {
             featurehighlighted: function (evt) {
                 var feature = evt.feature;
                 clearPopup();
-                function onPopupClose(evt) {
-                    clearPopup();
-                }
-                var panel = "";
+                var title = "";
+                var body = "";
                 if (feature.attributes.id != undefined) {
+                    title = feature.attributes.otsikko;
                     var formCommon = 
                         '<input type="hidden" name="email" value="'+email+'">'+
                         '<input type="hidden" name="password" value="'+password+'">'+
@@ -107,19 +116,12 @@ function new_identity() {
                         '<input type="hidden" name="cmd" value="del">'+
                         '<input type="submit" value="Poista tarina" onclick="openStoryWindow()">'+
                         '</form>';
-                    panel = '<h2>'+feature.attributes.otsikko+'</h2>'+
-                        feature.attributes.story+storyForm+pictureForm+delForm;
+                    body = feature.attributes.story + storyForm + pictureForm + delForm;
                 } else {
-                    panel = '<h2>Uusi tarina</h2>Päivitä tarinakartta niin voit editoida tätä tarinaa.';
+                    title = 'Uusi tarina';
+                    body = 'Päivitä tarinakartta niin voit editoida tätä tarinaa.';
                 }
-                popup = new OpenLayers.Popup.FramedCloud(
-                    "featurePopup",
-                    feature.geometry.getBounds().getCenterLonLat(),
-                    new OpenLayers.Size(400,300),
-                    panel,
-                    null, true, onPopupClose);
-                popup.autoSize = false;
-                map.addPopup(popup, true);
+                addPopup(feature, {title: title, body: body, select: true});
             }
         }
     });
@@ -140,12 +142,20 @@ function new_identity() {
     document.getElementById('mode-selector').innerHTML = form;
 
     drawControls = {
-        point: new OpenLayers.Control.DrawFeature(storiesLayer,
+        point: new OpenLayers.Control.DrawFeature(editorLayer,
                                                   OpenLayers.Handler.Point)
     };
 
     map.addControl(drawControls.point);
 
+    for (var i = 0; i < map.layers.length; ++i) {
+        var l = map.layers[i];
+        if (l.name == "Tarinat") {
+            l.setVisibility(false);
+            break;
+        }
+    }
+    
 }
 
 function toggleControl(element) {
@@ -160,7 +170,7 @@ function toggleControl(element) {
 }
 
 function saveEdit(element) {
-    var features = storiesLayer.features;
+    var features = editorLayer.features;
     for (var i = 0; i < features.length; i++) {
         if (features[i].state == "Insert") {
             features[i].attributes.email = email;

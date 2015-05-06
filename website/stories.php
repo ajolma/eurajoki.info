@@ -11,7 +11,12 @@
     <meta http-equiv="EXPIRES" CONTENT="Wed, 13 Nov 2013 20:00:00 GMT" />
 
     <?php include "design/include.html"; ?>
+    <link rel="stylesheet" type="text/css" href="/jquery/colorbox.css" />
     <link rel="stylesheet" type="text/css" href="css/stories.css" />
+
+    <script language="javascript" type="text/javascript" src="/jquery/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery-ui.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery.colorbox.js"></script>
 
     <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
