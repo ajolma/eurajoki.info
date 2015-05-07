@@ -18,9 +18,8 @@ function parseArray(arrStr) {
 }
 
 function create_story_layer(options) {
-    
-    if (options == null)
-        options = {visibility: true};
+
+    options = $.extend({visibility: true}, options);
 
     var MyStyle = function(color,graphic) {
         this.fillOpacity = 0.2;
@@ -57,8 +56,7 @@ function create_story_layer(options) {
     });
 
     story_layer.featurePopupText = function(feature, options) {
-        if (options == null)
-            options = {interactive: false};
+        options = $.extend({interactive: false}, options);
         var body = feature.attributes.story + '<br /> <br />';
         if (options.interactive && feature.attributes.kuvia > 0) {
             var href = "http://ajolma.net/Eurajoki/files.pl?pic=";

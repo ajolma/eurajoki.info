@@ -7,33 +7,29 @@ var hoverControl;
 var selectControl;
 var selectedFeature = null;
 
-function addPopup(feature, contents) {
-    if (contents == null) contents = {};
-    contents.width = typeof contents.width !== 'undefined' ? contents.width : 350;
-    contents.height = typeof contents.height !== 'undefined' ? contents.height : 200;
-    contents.select = typeof contents.select !== 'undefined' ? contents.select : false;
+function addPopup(feature, options) {
+    options = $.extend({width: 350, height: 200, select: false}, options);
     var popup = new OpenLayers.Popup.FramedCloud(
         "featurePopup",
         feature.geometry.getBounds().getCenterLonLat(),
-        new OpenLayers.Size(contents.width, contents.height),
-        '<h2>'+contents.title+'</h2>'+contents.body,
+        new OpenLayers.Size(options.width, options.height),
+        '<h2>'+options.title+'</h2>'+options.body,
         null, 
-        contents.select,
+        options.select,
         clearPopup
     );
     popup.autoSize = false;
     map.addPopup(popup, true);
-    if (contents.select) 
+    if (options.select) 
         selectedFeature = feature;
     else
         // hack to make this dialog box insensitive to mouse, see related css
         popup.groupDiv.parentNode.id = 'featurePopup2';
-    blockPopups = contents.select;
+    blockPopups = options.select;
 }
 
 function clearPopup(options) {
-    if (options == null) options = {};
-    options.force = typeof options.force !== 'undefined' ? options.force : 2; // 1 only temps, 2 all
+    options = $.extend({force: 2}, options); // 1 only temps, 2 all
     if (options.force == 1 && blockPopups)
         return;
     blockPopups = false;
@@ -50,8 +46,7 @@ function clearPopup(options) {
 
 function create_controls(hoverLayers, selectLayers, options) {
 
-    if (options == null)
-        options = {multiple: false, clickout: true};
+    options = $.extend({multiple: false, clickout: true}, options);
 
     hoverControl = new OpenLayers.Control.SelectFeature(hoverLayers, {
         hover: true,
@@ -61,8 +56,7 @@ function create_controls(hoverLayers, selectLayers, options) {
             if (blockPopups) return;
             clearPopup();
             this.highlight(feature);
-            var contents = feature.layer.featurePopupText(feature);
-            addPopup(feature, contents);
+            addPopup(feature, feature.layer.featurePopupText(feature));
         }
     });
     

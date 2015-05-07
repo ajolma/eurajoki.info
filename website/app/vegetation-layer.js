@@ -8,9 +8,8 @@ var plants_on_river_elements = null;
 var selected_plants = {};
 
 function create_vegetation_layer(options) {
-    
-    if (options == null)
-        options = {visibility: true};
+
+    options = $.extend({visibility: true}, options);
 
     var MyStyle = function(color,graphic) {
         this.fillOpacity = 0.2;
@@ -48,8 +47,7 @@ function create_vegetation_layer(options) {
     });
     
     vegetation_layer.featurePopupText = function(feature, options) {
-        if (options == null)
-            options = {interactive: false};
+        options = $.extend({interactive: false}, options);
         var fid = feature.attributes.id;
         var body = '<div style="">Kasvillisuus: ';
         var plants = plants_on_river_elements[fid];
