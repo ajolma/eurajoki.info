@@ -9,21 +9,21 @@ function init() {
 
     $.datepicker.setDefaults({
         closeText: "Valmis", // Display text for close link
-	prevText: "Edel", // Display text for previous month link
-	nextText: "Seur", // Display text for next month link
-	currentText: "Tänään", // Display text for current month link
-	monthNames: ["Tammikuu","Helmikuu","Maaliskuu","Huhtikuu","Toukokuu","Kesäkuu",
-		     "Heinäkuu","Elokuu","Syyskuu","Lokakuu","Marraskuu","Joulukuu"], // Names of months for drop-down and formatting
-	monthNamesShort: ["Tam", "Hel", "Maa", "Huh", "Tou", "Kes", "Hei", "Elo", "Syy", "Lok", "Mar", "Jou"], // For formatting
-	dayNames: ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"], // For formatting
-	dayNamesShort: ["Sun", "Maa", "Tii", "Kes", "Tor", "Per", "Lau"], // For formatting
-	dayNamesMin: ["Su","Ma","Ti","Ke","To","Pe","La"], // Column headings for days starting at Sunday
-	weekHeader: "Vko", // Column header for week of the year
-	dateFormat: "dd.mm.yy", // See format options on parseDate
-	firstDay: 0, // The first day of the week, Sun = 0, Mon = 1, ...
-	isRTL: false, // True if right-to-left language, false if left-to-right
-	showMonthAfterYear: false, // True if the year select precedes month, false for month then year
-	yearSuffix: "" // Additional text to append to the year in the month headers
+        prevText: "Edel", // Display text for previous month link
+        nextText: "Seur", // Display text for next month link
+        currentText: "Tänään", // Display text for current month link
+        monthNames: ["Tammikuu","Helmikuu","Maaliskuu","Huhtikuu","Toukokuu","Kesäkuu",
+                     "Heinäkuu","Elokuu","Syyskuu","Lokakuu","Marraskuu","Joulukuu"], // Names of months for drop-down and formatting
+        monthNamesShort: ["Tam", "Hel", "Maa", "Huh", "Tou", "Kes", "Hei", "Elo", "Syy", "Lok", "Mar", "Jou"], // For formatting
+        dayNames: ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"], // For formatting
+        dayNamesShort: ["Sun", "Maa", "Tii", "Kes", "Tor", "Per", "Lau"], // For formatting
+        dayNamesMin: ["Su","Ma","Ti","Ke","To","Pe","La"], // Column headings for days starting at Sunday
+        weekHeader: "Vko", // Column header for week of the year
+        dateFormat: "dd.mm.yy", // See format options on parseDate
+        firstDay: 0, // The first day of the week, Sun = 0, Mon = 1, ...
+        isRTL: false, // True if right-to-left language, false if left-to-right
+        showMonthAfterYear: false, // True if the year select precedes month, false for month then year
+        yearSuffix: "" // Additional text to append to the year in the month headers
     });
 
     map = make_map();
@@ -52,7 +52,7 @@ function onDatasetsReceived(param) {
     sortable.sort(function(a, b) { return a.nimike.localeCompare(b.nimike) })
     $.each(sortable, function(i, dataset) {
         var html = '<option value="'+dataset.koodi+'"';
-        if (locs[dataset.koodi]) html += ' selected';
+        if (containsObject(dataset.koodi,config.paikka)) html += ' selected';
         html += '>'+dataset.nimike+'</option>';
         $("#location").append(html);
     });
@@ -67,7 +67,7 @@ function onVariablesReceived(param) {
     variables = param;
     $.each(variables, function(i, variable) {
         var html = '<option value="'+variable.suure+'"';
-        if (vars[variable.suure]) html += ' selected';
+        if (containsObject(variable.suure,config.suure)) html += ' selected';
         html += '>'+variable.nimi+'</option>';
         $("#variable").append(html);
     });
@@ -92,11 +92,11 @@ function plot() {
                 timezone: "browser"
             },
             zoom: {
-		interactive: true
-	    },
-	    pan: {
-		interactive: true
-	    },
+                interactive: true
+            },
+            pan: {
+                interactive: true
+            },
             grid: {
                 //markings: [
                 //    { color: '#ff0000', linewidth: 1, xaxis: { from: ann_time, to: ann_time } }
@@ -129,20 +129,17 @@ function plot() {
     }
     
     var get = 'from='+$("#beginDate").val()+'&to='+$("#endDate").val();
-    var php_get = get;
     selected_variables.each(function() {
         var v = $(this).val();
         v = v.replace("+","%2B");
         get += '&suure='+v;
-        php_get += '&suure%5B%5D='+v;
     });
     selected_locations.each(function() {
         var v = $(this).val();
         get += '&paikka='+v;
-        php_get += '&paikka%5B%5D='+v;
     });
-    var data_get = sos_url+'request=GetDataset'+'&max=5000&'+get;
-    var page_get = '/data.php?'+php_get;
+    var data_get = config.url.data+'request=GetDataset'+'&max=5000&'+get;
+    var page_get = '/data.php?'+get;
     $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
     $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a> (kopiointia varten) <font color="gray">(linkki on hieman rikki: linkistä avautuvalla sivulla paikat eivät tulee valituiksi kartalla)</font>');
     
@@ -156,18 +153,20 @@ function plot() {
 
 $(function() {
 
+    config();
+
     $.ajax({
-	url: sos_url+'request=GetDatasets',
-	type: "GET",
-	dataType: "json",
-	success: onDatasetsReceived
+        url: config.url.data+'request=GetDatasets',
+        type: "GET",
+        dataType: "json",
+        success: onDatasetsReceived
     });
     
     $.ajax({
-	url: sos_url+'request=GetVariables',
-	type: "GET",
-	dataType: "json",
-	success: onVariablesReceived
+        url: config.url.data+'request=GetVariables',
+        type: "GET",
+        dataType: "json",
+        success: onVariablesReceived
     });
 
     var date = new Date();
@@ -177,8 +176,8 @@ $(function() {
     $("#endDate").datepicker();
     $("#endDate").datepicker("option", "dateFormat", "yy-mm-dd");
     $("#endDate").val(year+'-'+mon+'-'+day);
-    if (date1) {
-        var d = date1.split("-");
+    if (config.to) {
+        var d = config.to.split("-");
         $("#endDate").val(d[0]+'-'+d[1]+'-'+d[2]);
     }
     
@@ -186,14 +185,14 @@ $(function() {
     $("#beginDate").datepicker("option", "dateFormat", "yy-mm-dd");
     mon--;if (mon < 1) {mon = 12;year--;}
     $("#beginDate").val(year+'-'+mon+'-'+day);
-    if (date0) {
-        var d = date0.split("-");
+    if (config.from) {
+        var d = config.from.split("-");
         $("#beginDate").val(d[0]+'-'+d[1]+'-'+d[2]);
     }
     
     $("#plot").click(plot);
 
-    if (date0) {
+    if (config.from) {
         auto_plot = 1;
     }
 

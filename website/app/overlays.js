@@ -2,12 +2,32 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
+function styleMap(options) {
+    options = $.extend({graphic: 'star'}, options);
+    var style = function(color,graphic) {
+        this.fillOpacity = 1;
+        this.graphicOpacity = 1;
+        this.strokeColor = "black";
+        this.fillColor = color;
+        this.graphicName = graphic;
+        this.pointRadius = 10;
+        this.strokeWidth = 1;
+        this.rotation = 0;
+        this.strokeLinecap = "butt";
+    };
+    return new OpenLayers.StyleMap({
+        'default':   new OpenLayers.Style(new style("lightblue", options.graphic)),
+        'temporary': new OpenLayers.Style(new style("yellow", options.graphic)),
+        'select':    new OpenLayers.Style(new style("red", options.graphic))        
+    });
+}
+    
 function overlays() {
 
     var ilmakuvat = new OpenLayers.Layer.TMS("Ilmakuvat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: overlay_url+'/aerial-images/tiles.pl/',
+        myUrl: config.url.overlay+'/aerial-images/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -18,7 +38,7 @@ function overlays() {
     var perus62 = new OpenLayers.Layer.TMS("Peruskartta 1962", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: overlay_url+'/peruskartat_1962/tiles.pl/',
+        myUrl: config.url.overlay+'/peruskartat_1962/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -29,30 +49,12 @@ function overlays() {
     var senaatin = new OpenLayers.Layer.TMS("Senaatin kartat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: overlay_url+'/senaatin_kartat/tiles.pl/',
+        myUrl: config.url.overlay+'/senaatin_kartat/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
         getURL: getURL,
         visibility: false
-    });
-
-    MyStyle = function(color,graphic) {
-        this.fillOpacity = 0.2;
-        this.graphicOpacity = 1;
-        this.strokeColor = color;
-        this.fillColor = color;
-        this.graphicName = graphic;
-        this.pointRadius = 10;
-        this.strokeWidth = 3;
-        this.rotation = 45;
-        this.strokeLinecap = "butt";
-    };
-
-    var styleMap = new OpenLayers.StyleMap({
-        "default": new OpenLayers.Style(new MyStyle("blue","star")),
-        select: new OpenLayers.Style(new MyStyle("red","star")),
-        temporary: new OpenLayers.Style(new MyStyle("yellow","star"))
     });
 
     return [senaatin,perus62,ilmakuvat];

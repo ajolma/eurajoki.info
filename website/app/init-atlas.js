@@ -52,16 +52,18 @@ function window_resize() {
 }
 
 $(function() {
+    
+    config();
 
     $.ajax({
-	url: vegetation_url+'request=GetPlants',
+	url: config.url.kasvillisuus+'request=GetPlants',
 	type: "GET",
 	dataType: "json",
 	success: onPlantsReceived
     });
     
     $.ajax({
-	url: vegetation_url+'request=GetPlantsOnRiver',
+	url: config.url.kasvillisuus+'request=GetPlantsOnRiver',
 	type: "GET",
 	dataType: "json",
 	success: function(param) {

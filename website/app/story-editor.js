@@ -59,8 +59,8 @@ function new_identity() {
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({
             version: "1.1.0",
             srsName: "EPSG:3857",
-            url: story_wfs_url,
-            featureType: stories_prefix+".tarinat.geom",
+            url: config.url.tarinapaikat,
+            featureType: config.prefix.tarinapaikat+".tarinat.geom",
             outputFormat: "GML2"
         }),
         filter: new OpenLayers.Filter.Logical({
@@ -101,17 +101,17 @@ function new_identity() {
                         '<input type="hidden" name="password" value="'+password+'">'+
                         '<input type="hidden" name="story" value="'+feature.attributes.id+'">';
                     var storyForm = 
-                        '<form id="StoryForm" method="post" action="'+story_url+'" target="StoryWindow">'+
+                        '<form id="StoryForm" method="post" action="'+config.url.tarina+'" target="StoryWindow">'+
                         formCommon+
                         '<input type="submit" value="Muokkaa tarinaa" onclick="openStoryWindow()">'+
                         '</form>';
                     var pictureForm =
-                        '<form id="PictureForm" method="post" action="'+picture_url+'" target="PictureWindow">'+
+                        '<form id="PictureForm" method="post" action="'+config.url.kuva+'" target="PictureWindow">'+
                         formCommon+
                         '<input type="submit" value="Katso tarinaan liittyvät kuvat" onclick="openPictureWindow()">'+
                         '</form>';
                     var delForm =
-                        '<form id="DeleteForm" method="post" action="'+story_url+'" target="StoryWindow">'+
+                        '<form id="DeleteForm" method="post" action="'+config.url.tarina+'" target="StoryWindow">'+
                         formCommon+
                         '<input type="hidden" name="cmd" value="del">'+
                         '<input type="submit" value="Poista tarina" onclick="openStoryWindow()">'+

@@ -70,6 +70,18 @@ function taustakartat() {
         sphericalMecator: true,
         transitionEffect: 'resize'
     });
+
+    var mb = new OpenLayers.Layer.XYZ(
+        "Mapbox",
+        [
+            "http://api.tiles.mapbox.com/v4/mapbox.streets/${z}/${x}/${y}.png?access_token=pk.eyJ1IjoiYWpvbG1hIiwiYSI6InJ2MkxZRmMifQ.e2Xel3UioA_2yE4gQEgXMA"
+        ], {
+            attribution: "Tiles &copy; <a href='http://mapbox.com/'>MapBox</a>",
+            sphericalMercator: true,
+            wrapDateLine: true,
+            numZoomLevels: numZoomLevels
+        }
+    );
     
-    return [tk,pk,orto,osm,gi,gphy,gs];
+    return [mb,tk,pk,orto,osm,gi,gphy,gs];
 }

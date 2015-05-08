@@ -13,6 +13,7 @@
     <?php header('Access-Control-Allow-Origin: *'); ?>
 
     <?php include "design/include.html"; ?>
+
     <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
     <link rel="stylesheet" type="text/css" href="/jquery/colorbox.css" />
     <link rel="stylesheet" type="text/css" href="css/atlas.css" />

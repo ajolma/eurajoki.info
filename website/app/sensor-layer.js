@@ -3,7 +3,6 @@
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 var sensor_layer;
-var sensor_graphic = "star";
 
 var datasets; // set to received data in jquery initialization
 var variables; // set to received data in jquery initialization
@@ -41,7 +40,7 @@ function set_begin_date() {
 
 function location_info(data) {
     var raw = '';
-    if (raaka) {
+    if (config.raaka) {
         raw = ' (raakadataa)'
     }
     var info = $('#location_info').html();
@@ -222,28 +221,8 @@ function selectVariable() {
 }
 
 function create_sensor_layer(options) {
+    options = $.extend({visibility: true}, options);
 
-    if (options == null)
-        options = {visibility: true};
-
-    var MyStyle = function(color,graphic) {
-        this.fillOpacity = 0.2;
-        this.graphicOpacity = 1;
-        this.strokeColor = color;
-        this.fillColor = color;
-        this.graphicName = graphic;
-        this.pointRadius = 10;
-        this.strokeWidth = 3;
-        this.rotation = 45;
-        this.strokeLinecap = "butt";
-    };
-
-    var styleMap = new OpenLayers.StyleMap({
-        'default':   new OpenLayers.Style(new MyStyle("blue",  sensor_graphic)),
-        'select':    new OpenLayers.Style(new MyStyle("red",   sensor_graphic)),
-        'temporary': new OpenLayers.Style(new MyStyle("yellow", sensor_graphic))
-    });
-    
     sensor_layer = new OpenLayers.Layer.Vector("Mittauskohteet", {
         strategies: [
             new OpenLayers.Strategy.BBOX(),
@@ -252,17 +231,20 @@ function create_sensor_layer(options) {
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({
             version: "1.1.0",
             srsName: "EPSG:3857",
-            url: wfs_url,
-            featureType: sensor_layer_prefix+".mittauskohteet.geom",
+            url: config.url.mittauspisteet,
+            featureType: config.prefix.mittauspisteet+".mittauskohteet.geom",
             outputFormat: "GML2"
         }),
         visibility: options.visibility,
         extractAttributes: true,
-        styleMap: styleMap
+        styleMap: styleMap()
     });
 
     sensor_layer.featurePopupText = function(feature) {
-        return {title:feature.attributes.nimike, body:feature.attributes.info, width : 250, height : 150};
+        return {title:feature.attributes.nimike, 
+                body:feature.attributes.info, 
+                width : 250, 
+                height : 150};
     };
 
     sensor_layer.events.on({

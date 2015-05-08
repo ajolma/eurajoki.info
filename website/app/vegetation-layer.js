@@ -37,8 +37,8 @@ function create_vegetation_layer(options) {
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({
             version: "1.1.0",
             srsName: "EPSG:3857",
-            url: wfs_url,
-            featureType: vegetation_prefix+".jokipalat.geom",
+            url: config.url.joki,
+            featureType: config.prefix.joki+".jokipalat.geom",
             outputFormat: "GML2"
         }),
         visibility: options.visibility,

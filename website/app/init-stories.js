@@ -4,8 +4,10 @@
 
 function init() {
 
+    config();
+
     // story editor set up:
-    if (editor == 1) {
+    if (config.editor == 1) {
         identity_form();
         set_identity_callback = new_identity;
     }

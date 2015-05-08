@@ -3,7 +3,6 @@
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 var story_layer;
-var story_graphic = "cross";
 
 function openPictureWindow() {
     window.open('', 'PictureWindow', 'width=980,height=660,status=yes,resizable=yes,scrollbars=yes');
@@ -21,24 +20,6 @@ function create_story_layer(options) {
 
     options = $.extend({visibility: true}, options);
 
-    var MyStyle = function(color,graphic) {
-        this.fillOpacity = 0.2;
-        this.graphicOpacity = 1;
-        this.strokeColor = color;
-        this.fillColor = color;
-        this.graphicName = graphic;
-        this.pointRadius = 10;
-        this.strokeWidth = 3;
-        this.rotation = 45;
-        this.strokeLinecap = "butt";
-    };
-    
-    var styleMap = new OpenLayers.StyleMap({
-        'default':   new OpenLayers.Style(new MyStyle("blue",   story_graphic)),
-        'select':    new OpenLayers.Style(new MyStyle("red",    story_graphic)),
-        'temporary': new OpenLayers.Style(new MyStyle("yellow", story_graphic))
-    });
-
     story_layer = new OpenLayers.Layer.Vector("Tarinat", {
         strategies: [
             new OpenLayers.Strategy.BBOX()
@@ -46,13 +27,13 @@ function create_story_layer(options) {
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({
             version: "1.1.0",
             srsName: "EPSG:3857",
-            url: story_wfs_url,
-            featureType: stories_prefix+".public_tarinat2.geom",
+            url: config.url.tarinapaikat,
+            featureType: config.prefix.tarinapaikat+".public_tarinat2.geom",
             outputFormat: "GML2"
         }),
         visibility: options.visibility,
         extractAttributes: true,
-        styleMap: styleMap
+        styleMap: styleMap({graphic: 'cross'})
     });
 
     story_layer.featurePopupText = function(feature, options) {
@@ -63,6 +44,7 @@ function create_story_layer(options) {
             var tag = 'story_image';
             var a0 = ' class="'+tag+' cboxElement" rel="'+tag+'" data-cbox-rel="'+tag+'"';
             a0 += ' data-cbox-photo="true"';
+            a0 += ' data-cbox-opacity=0.6';
             a0 += ' data-cbox-width="75%"';
             a0 += ' data-cbox-height="75%"';
             var a1 = a0+' style="display:none"';
