@@ -33,7 +33,7 @@ function create_story_layer(options) {
         }),
         visibility: options.visibility,
         extractAttributes: true,
-        styleMap: styleMap({graphic: 'cross', pointRadius: 10})
+        styleMap: styleMap({graphic: 'cross', pointRadius: config.featureSize})
     });
 
     story_layer.featurePopupText = function(feature, options) {

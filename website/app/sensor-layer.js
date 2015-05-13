@@ -238,7 +238,7 @@ function create_sensor_layer(options) {
         }),
         visibility: options.visibility,
         extractAttributes: true,
-        styleMap: styleMap()
+        styleMap: styleMap({graphic: 'star', pointRadius: config.featureSize})
     });
 
     sensor_layer.featurePopupText = function(feature) {
@@ -252,7 +252,7 @@ function create_sensor_layer(options) {
         featureselected: function(obj) {
             var feature = obj.feature;
             if (options.blockingDialog) {
-                var contents = story_layer.featurePopupText(feature, {interactive: true});
+                var contents = sensor_layer.featurePopupText(feature, {interactive: true});
                 contents.block = true;
                 addPopup(feature, contents);
             }

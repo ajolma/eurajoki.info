@@ -7,7 +7,6 @@ var config;
 function config() {
     config = {numZoomLevels: 20,
               baseLayers: [
-                  'Thunderforest maasto',
                   'Mapbox',
                   'OpenStreetMap',
                   'GoogleMap',
@@ -18,8 +17,9 @@ function config() {
                   'MMLOrto'                  
               ],
               overlays: {
-                  Vegetation: 1
+                  Vegetation: 0
               },
+              featureSize: 13,
               raaka: 0,
               app: 'Eurajoki',
               editor: 0,
