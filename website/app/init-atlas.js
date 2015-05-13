@@ -17,10 +17,10 @@ function init() {
     map.addLayers(layers);
 
     layers = [];
-    layers.push(create_sensor_layer({visibility: false}));
-    layers.push(create_story_layer({visibility: false}));
+    layers.push(create_sensor_layer({visibility: false, blockingDialog: true}));
+    layers.push(create_story_layer({visibility: false, blockingDialog: true}));
     if ('Vegetation' in config.overlays && config.overlays.Vegetation)
-        layers.push(create_vegetation_layer({visibility: false}));
+        layers.push(create_vegetation_layer({visibility: false, blockingDialog: true}));
     map.addLayers(layers);
 
     createControls({hoverLayers:layers, selectLayers:layers});
@@ -28,7 +28,7 @@ function init() {
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
     map.events.register('mouseover', map, function (e) {
-        clearPopup({force:1});
+        clearPopup();
     });
 
 }

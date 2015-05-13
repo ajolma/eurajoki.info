@@ -39,7 +39,7 @@ function init() {
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
     map.events.register('mouseover', map, function (e) {
-        clearPopup({force:1});
+        clearPopup();
     });
 
 }

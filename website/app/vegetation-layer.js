@@ -9,7 +9,7 @@ var selected_plants = {};
 
 function create_vegetation_layer(options) {
 
-    options = $.extend({visibility: true}, options);
+    options = $.extend({visibility: true, blockingDialog: false}, options);
 
     var MyStyle = function(color,graphic) {
         this.fillOpacity = 0.2;
@@ -81,7 +81,6 @@ function create_vegetation_layer(options) {
 
     vegetation_layer.events.on({
         featureselected: function(obj) {
-            //blockPopups = true;
             var feature = obj.feature;
             if (select_river_element_flag) {
                 return;
@@ -94,11 +93,17 @@ function create_vegetation_layer(options) {
                 $("li[id="+plant+"]", "#selectable").addClass("ui-selected");
                 selected_plants[plant] = 1;
             }
-            var contents = vegetation_layer.featurePopupText(feature, {interactive: true});
-            contents.select = true;
-            addPopup(feature, contents);
+            if (options.blockingDialog) {
+                var contents = vegetation_layer.featurePopupText(feature, {interactive: true});
+                contents.block = true;
+                addPopup(feature, contents);
+            }
         },
-        featureunselected: clearPopup
+        featureunselected: function(obj) {
+            if (options.blockingDialog) {
+                clearPopup({unblock: true});
+            }
+        }
     });
 
     return vegetation_layer;

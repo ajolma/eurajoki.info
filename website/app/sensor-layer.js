@@ -222,7 +222,7 @@ function selectVariable() {
 }
 
 function create_sensor_layer(options) {
-    options = $.extend({visibility: true}, options);
+    options = $.extend({visibility: true, blockingDialog: false}, options);
 
     sensor_layer = new OpenLayers.Layer.Vector("Mittauskohteet", {
         strategies: [
@@ -249,8 +249,21 @@ function create_sensor_layer(options) {
     };
 
     sensor_layer.events.on({
-        featureselected: feature_selection_event,
-        featureunselected: feature_selection_event
+        featureselected: function(obj) {
+            var feature = obj.feature;
+            if (options.blockingDialog) {
+                var contents = story_layer.featurePopupText(feature, {interactive: true});
+                contents.block = true;
+                addPopup(feature, contents);
+            }
+            feature_selection_event();
+        },
+        featureunselected: function() {
+            if (options.blockingDialog) {
+                clearPopup({unblock: true});
+            }
+            feature_selection_event();
+        }
     });
 
     return sensor_layer;

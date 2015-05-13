@@ -18,7 +18,7 @@ function parseArray(arrStr) {
 
 function create_story_layer(options) {
 
-    options = $.extend({visibility: true}, options);
+    options = $.extend({visibility: true, blockingDialog: false}, options);
 
     story_layer = new OpenLayers.Layer.Vector("Tarinat", {
         strategies: [
@@ -79,13 +79,17 @@ function create_story_layer(options) {
 
     story_layer.events.on({
         featureselected: function(obj) {
-            var feature = obj.feature;
-            var contents = story_layer.featurePopupText(feature, {interactive: true});
-            contents.select = true;
-            addPopup(feature, contents);
+            if (options.blockingDialog) {
+                var feature = obj.feature;
+                var contents = story_layer.featurePopupText(feature, {interactive: true});
+                contents.block = true;
+                addPopup(feature, contents);
+            }
         },
         featureunselected: function(obj) {
-            clearPopup();
+            if (options.blockingDialog) {
+                clearPopup({unblock: true});
+            }
         }
     });
 

@@ -2,6 +2,7 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
+var popupBlocked = false;
 var onFeature = false;
 var onPopup = false;
 var hoverFeature = null;
@@ -10,7 +11,9 @@ var hoverControl = null;
 var selectControl = null;
 
 function addPopup(feature, options) {
-    options = $.extend({width: 350, height: 200, closeBox: true, select: false}, options);
+    if (popupBlocked) 
+        return;
+    options = $.extend({width: 350, height: 200, closeBox: true, block: false}, options);
     var popup = new OpenLayers.Popup.FramedCloud(
         "featurePopup",
         feature.geometry.getBounds().getCenterLonLat(),
@@ -20,7 +23,8 @@ function addPopup(feature, options) {
         options.closeBox,
         function() {
             onPopup = false;
-            clearPopup();
+            popupBlocked = false;
+            clearPopup({unselect:feature});
         }
     );
     popup.div.onmouseover = function(evt) {
@@ -31,16 +35,17 @@ function addPopup(feature, options) {
     };
     popup.autoSize = false;
     map.addPopup(popup, true);
-    if (!options.closeBox) 
+    popupBlocked = options.block;
+    if (!options.closeBox && !popupBlocked) 
         // hack to make this dialog box insensitive to mouse, see related css
         popup.groupDiv.parentNode.id = 'featurePopup2';
 }
 
 function clearPopup(options) {
-    options = $.extend({force: 2, unselect: null}, options); // 1 only temps, 2 all
-    if (onPopup || onFeature)
-        return;
-    if (options.force == 1 && (onPopup || onFeature))
+    options = $.extend({unselect: null, unblock: false}, options);
+    if (options.unblock) 
+        popupBlocked = false;
+    if (popupBlocked || onPopup || onFeature)
         return;
     if (selectControl && options.unselect != null) {
         // must avoid deep recursion
@@ -84,6 +89,7 @@ function createControls(options) {
             highlightOnly: true,
             renderIntent: "temporary",
             overFeature: function(feature) {
+                if (popupBlocked) return;
                 if (feature == hoverFeature) return;
                 clearPopup();
                 if (!isSelected(feature))

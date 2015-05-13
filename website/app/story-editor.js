@@ -84,6 +84,18 @@ function new_identity() {
     });
     map.addLayer(editorLayer);
 
+    editorLayer.events.on({
+        featureselected: function(obj) {
+            var feature = obj.feature;
+            var contents = editorLayer.featurePopupText(feature, {interactive: true});
+            contents.block = true;
+            addPopup(feature, contents);
+        },
+        featureunselected: function(obj) {
+            clearPopup({unblock: true});
+        }
+    });
+
     editorLayer.featurePopupText = function(feature, options) {
         var title = "";
         var body = "";
@@ -117,7 +129,7 @@ function new_identity() {
         return {title:title, body:body};
     }
 
-    createControls({hoverLayers:editorLayer});
+    createControls({hoverLayers:editorLayer, selectLayers:editorLayer});
 
     var form = 
         "<fieldset>"+
