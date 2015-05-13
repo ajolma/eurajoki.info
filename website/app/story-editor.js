@@ -84,50 +84,40 @@ function new_identity() {
     });
     map.addLayer(editorLayer);
 
-    hoverControl = new OpenLayers.Control.SelectFeature(editorLayer, {
-        hover: true,
-        highlightOnly: true,
-        renderIntent: "temporary",
-        eventListeners: {
-            featurehighlighted: function (evt) {
-                var feature = evt.feature;
-                clearPopup();
-                var title = "";
-                var body = "";
-                if (feature.attributes.id != undefined) {
-                    title = feature.attributes.otsikko;
-                    var formCommon = 
-                        '<input type="hidden" name="email" value="'+email+'">'+
-                        '<input type="hidden" name="password" value="'+password+'">'+
-                        '<input type="hidden" name="story" value="'+feature.attributes.id+'">';
-                    var storyForm = 
-                        '<form id="StoryForm" method="post" action="'+config.url.tarina+'" target="StoryWindow">'+
-                        formCommon+
-                        '<input type="submit" value="Muokkaa tarinaa" onclick="openStoryWindow()">'+
-                        '</form>';
-                    var pictureForm =
-                        '<form id="PictureForm" method="post" action="'+config.url.kuva+'" target="PictureWindow">'+
-                        formCommon+
-                        '<input type="submit" value="Katso tarinaan liittyvät kuvat" onclick="openPictureWindow()">'+
-                        '</form>';
-                    var delForm =
-                        '<form id="DeleteForm" method="post" action="'+config.url.tarina+'" target="StoryWindow">'+
-                        formCommon+
-                        '<input type="hidden" name="cmd" value="del">'+
-                        '<input type="submit" value="Poista tarina" onclick="openStoryWindow()">'+
-                        '</form>';
-                    body = feature.attributes.story + storyForm + pictureForm + delForm;
-                } else {
-                    title = 'Uusi tarina';
-                    body = 'Päivitä tarinakartta niin voit editoida tätä tarinaa.';
-                }
-                addPopup(feature, {title: title, body: body, select: true});
-            }
+    editorLayer.featurePopupText = function(feature, options) {
+        var title = "";
+        var body = "";
+        if (feature.attributes.id != undefined) {
+            title = feature.attributes.otsikko;
+            var formCommon = 
+                '<input type="hidden" name="email" value="'+email+'">'+
+                '<input type="hidden" name="password" value="'+password+'">'+
+                '<input type="hidden" name="story" value="'+feature.attributes.id+'">';
+            var storyForm = 
+                '<form id="StoryForm" method="post" action="'+config.url.tarina+'" target="StoryWindow">'+
+                formCommon+
+                '<input type="submit" value="Muokkaa tarinaa" onclick="openStoryWindow()">'+
+                '</form>';
+            var pictureForm =
+                '<form id="PictureForm" method="post" action="'+config.url.kuva+'" target="PictureWindow">'+
+                formCommon+
+                '<input type="submit" value="Katso tarinaan liittyvät kuvat" onclick="openPictureWindow()">'+
+                '</form>';
+            var delForm =
+                '<form id="DeleteForm" method="post" action="'+config.url.tarina+'" target="StoryWindow">'+
+                formCommon+
+                '<input type="hidden" name="cmd" value="del">'+
+                '<input type="submit" value="Poista tarina" onclick="openStoryWindow()">'+
+                '</form>';
+            body = feature.attributes.story + storyForm + pictureForm + delForm;
+        } else {
+            title = 'Uusi tarina';
+            body = 'Päivitä tarinakartta niin voit editoida tätä tarinaa.';
         }
-    });
-    
-    map.addControl(hoverControl);
-    hoverControl.activate();
+        return {title:title, body:body};
+    }
+
+    createControls({hoverLayers:editorLayer});
 
     var form = 
         "<fieldset>"+

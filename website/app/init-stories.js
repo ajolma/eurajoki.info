@@ -23,13 +23,12 @@ function init() {
     
     map.addLayers(layers);
 
-    create_controls(story_layer, story_layer, {multiple: false, clickout: true});
+    createControls({hoverLayers:story_layer, selectLayers:story_layer, multiple: false, clickout: true});
 
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
-    map.events.register('mouseout', map, function (e) {
-        if (e.toElement && e.toElement.nodeName == "DIV")
-            clearPopup({force:1});
+    map.events.register('mouseover', map, function (e) {
+        clearPopup({force:1});
     });
-
+    
 }

@@ -74,12 +74,12 @@ function isSelected(feature) {
     }
 }
 
-function create_controls(hoverLayers, selectLayers, options) {
+function createControls(options) {
 
-    options = $.extend({multiple: false, clickout: true, hover: true, select: true, closeBox: true}, options);
+    options = $.extend({multiple: false, clickout: true, closeBox: true}, options);
 
-    if (options.hover) 
-        hoverControl = new OpenLayers.Control.SelectFeature(hoverLayers, {
+    if (options.hoverLayers) 
+        hoverControl = new OpenLayers.Control.SelectFeature(options.hoverLayers, {
             hover: true,
             highlightOnly: true,
             renderIntent: "temporary",
@@ -99,20 +99,16 @@ function create_controls(hoverLayers, selectLayers, options) {
             }
         });
     
-    if (options.select)
-        selectControl = new OpenLayers.Control.SelectFeature(selectLayers, {
+    if (options.selectLayers)
+        selectControl = new OpenLayers.Control.SelectFeature(options.selectLayers, {
             clickout: options.clickout,
             toggle: true,
             multiple: options.multiple
         });
     
-    if (options.hover) 
-        map.addControl(hoverControl);
-    if (options.select)
-        map.addControl(selectControl);
-    if (options.hover) 
-        hoverControl.activate();
-    if (options.select)
-        selectControl.activate();
+    if (options.hoverLayers) map.addControl(hoverControl);
+    if (options.selectLayers) map.addControl(selectControl);
+    if (options.hoverLayers) hoverControl.activate();
+    if (options.selectLayers) selectControl.activate();
     
 }
