@@ -19,17 +19,17 @@ function init() {
     layers = [];
     layers.push(create_sensor_layer({visibility: false}));
     layers.push(create_story_layer({visibility: false}));
-    layers.push(create_vegetation_layer({visibility: false}));
+    if ('Vegetation' in config.overlays && config.overlays.Vegetation)
+        layers.push(create_vegetation_layer({visibility: false}));
     map.addLayers(layers);
 
     //create_controls(layers, [story_layer, vegetation_layer], {multiple: false});
-    create_controls(layers, layers, {multiple: false, clickout: true});
+    create_controls(layers, layers, {select: false});
 
     map.setCenter(new OpenLayers.LonLat(2438876,8665434), 10);
 
-    map.events.register('mouseout', map, function (e) {
-        if (e.toElement.nodeName == "TD")
-            clearPopup({force:1});
+    map.events.register('mouseover', map, function (e) {
+        clearPopup({force:1});
     });
 
 }
@@ -55,37 +55,38 @@ $(function() {
     
     config();
 
-    $.ajax({
-	url: config.url.kasvillisuus+'request=GetPlants',
-	type: "GET",
-	dataType: "json",
-	success: onPlantsReceived
-    });
-    
-    $.ajax({
-	url: config.url.kasvillisuus+'request=GetPlantsOnRiver',
-	type: "GET",
-	dataType: "json",
-	success: function(param) {
-            plants_on_river_elements = param;
-        }
-    });
+    if ('Vegetation' in config.overlays && config.overlays.Vegetation) {
+        $.ajax({
+	    url: config.url.kasvillisuus+'request=GetPlants',
+	    type: "GET",
+	    dataType: "json",
+	    success: onPlantsReceived
+        });
+        
+        $.ajax({
+	    url: config.url.kasvillisuus+'request=GetPlantsOnRiver',
+	    type: "GET",
+	    dataType: "json",
+	    success: function(param) {
+                plants_on_river_elements = param;
+            }
+        });
+
+        $( "#selectable" ).selectable({
+            selected: function( event, ui ) {
+                selected_plants[ui.selected.id] = 1;
+                update_vegetation_layer();
+            },
+            unselected: function( event, ui ) {
+                delete selected_plants[ui.unselected.id];
+                update_vegetation_layer();
+            } 
+        });
+    }
 
     $( "#dialog" ).dialog({
         autoOpen: false,
         closeText: "Sulje"
-    });
-
-    $( "#selectable" ).selectable({
-        selected: function( event, ui ) {
-            selected_plants[ui.selected.id] = 1;
-            update_vegetation_layer();
-        },
-        unselected: function( event, ui ) {
-            delete selected_plants[ui.unselected.id];
-            update_vegetation_layer();
-        }
-        
     });
 
     $( "#opener" ).click(function() {
@@ -102,6 +103,9 @@ $(function() {
         basemap_1962: "Peruskartta 1962",
         senate_maps: "Senaatin kartat"
     };
+
+    if ('Vegetation' in config.overlays && config.overlays.Vegetation)
+        panels.vegetation = "Kasvillisuus";
 
     for (var panel in panels) {
         $('#'+panel+'_panel').accordion({collapsible: true});

@@ -169,6 +169,7 @@ function feature_selection_event() {
 }
 
 function sync_features_to_locations() {
+    if (selectControl == null) return;
     syncing = true;
     selectControl.unselectAll();
     $("#location :selected").each(function() {

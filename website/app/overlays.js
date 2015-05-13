@@ -3,14 +3,14 @@
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
 function styleMap(options) {
-    options = $.extend({graphic: 'star'}, options);
-    var style = function(color,graphic) {
+    options = $.extend({graphic: 'star', pointRadius: 10}, options);
+    var style = function(color) {
         this.fillOpacity = 1;
         this.graphicOpacity = 1;
         this.strokeColor = "black";
         this.fillColor = color;
-        this.graphicName = graphic;
-        this.pointRadius = 10;
+        this.graphicName = options.graphic;
+        this.pointRadius = options.pointRadius;
         this.strokeWidth = 1;
         this.rotation = 0;
         this.strokeLinecap = "butt";
@@ -27,7 +27,7 @@ function overlays() {
     var ilmakuvat = new OpenLayers.Layer.TMS("Ilmakuvat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: config.url.overlay+'/aerial-images/tiles.pl/',
+        myUrl: config.url.overlay_tiles+'/aerial-images/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -38,7 +38,7 @@ function overlays() {
     var perus62 = new OpenLayers.Layer.TMS("Peruskartta 1962", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: config.url.overlay+'/peruskartat_1962/tiles.pl/',
+        myUrl: config.url.overlay_tiles+'/peruskartat_1962/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -49,7 +49,7 @@ function overlays() {
     var senaatin = new OpenLayers.Layer.TMS("Senaatin kartat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: config.url.overlay+'/senaatin_kartat/tiles.pl/',
+        myUrl: config.url.overlay_tiles+'/senaatin_kartat/tiles.pl/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,

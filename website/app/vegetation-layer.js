@@ -81,7 +81,7 @@ function create_vegetation_layer(options) {
 
     vegetation_layer.events.on({
         featureselected: function(obj) {
-            blockPopups = true;
+            //blockPopups = true;
             var feature = obj.feature;
             if (select_river_element_flag) {
                 return;
@@ -105,6 +105,7 @@ function create_vegetation_layer(options) {
 }
 
 function update_vegetation_layer() {
+    if (selectControl == null) return;
     for (var i = 0; i < vegetation_layer.features.length; ++i) {
         var f = vegetation_layer.features[i];
         var fid = f.attributes.id;

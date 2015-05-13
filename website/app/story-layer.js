@@ -33,7 +33,7 @@ function create_story_layer(options) {
         }),
         visibility: options.visibility,
         extractAttributes: true,
-        styleMap: styleMap({graphic: 'cross'})
+        styleMap: styleMap({graphic: 'cross', pointRadius: 10})
     });
 
     story_layer.featurePopupText = function(feature, options) {
@@ -84,7 +84,9 @@ function create_story_layer(options) {
             contents.select = true;
             addPopup(feature, contents);
         },
-        featureunselected: clearPopup
+        featureunselected: function(obj) {
+            clearPopup();
+        }
     });
 
     return story_layer;
