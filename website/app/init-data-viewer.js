@@ -55,6 +55,8 @@ function onDatasetsReceived(param) {
         html += '>'+dataset.nimike+'</option>';
         $("#location").append(html);
     });
+    locations_info();
+    //$('#location_info .ui-accordion-header').trigger("click");
     auto_plot++;
     if (auto_plot == 3) {
         sync_features_to_locations(); // does not do what we want since the map is probably not ready yet
@@ -70,6 +72,7 @@ function onVariablesReceived(param) {
         html += '>'+variable.nimi+'</option>';
         $("#variable").append(html);
     });
+    variables_info();
     auto_plot++;
     if (auto_plot == 3) {
         sync_features_to_locations(); // does not do what we want since the map is probably not ready yet
@@ -103,6 +106,7 @@ function plot() {
             }
         };
         var plot = $.plot(placeholder, data, options);
+        var y = plot.getYAxes();
 
         // annotation texts
         //var o = plot.pointOffset({ x: ann_time, y: 0 });
@@ -112,16 +116,23 @@ function plot() {
         //                   "px;color:#666;font-size:smaller'>" + ann + "</div>");
 
         // more than one y-axis:
-        var yaxis_width = 30; // this is a guess for now! probably this is not a constant
-        var left = (selected_variables.length-1)*yaxis_width;
+        var left = 0;
+        var i;
+        for (i = 0; i < y.length; i++) {
+            left += y[i].box.width+y[i].box.padding;
+        }
+        i = 0;
         selected_variables.each(function() {
             var v = $(this).val();
-            $.each(variables, function(i, variable) {
+            $.each(variables, function(code, variable) {
                 if (v == variable.suure) {
-                    placeholder.append(
-                        "<div style='position:absolute;left:"+left+"px;top:20px;color:#666;font-size:smaller'>"+
-                            variable.yksikko+"</div>");
-                    left -= yaxis_width;
+                    //console.log(v+' '+i);
+                    left -= y[i].box.width+y[i].box.padding;
+                    //console.log(variable.yksikko+' '+i+' '+y[i].box.width+' '+left);
+                    i++;
+                    placeholder.append("<div style='position:absolute;left:"+
+                                       left + "px;top:20px;color:#666;font-size:smaller'>"+
+                                       variable.yksikko + "</div>");
                 }
             });
         });
@@ -198,6 +209,7 @@ $(function() {
     init();
 
     $('#data_info').accordion({collapsible: true});
+    $('#data_info .ui-accordion-header').trigger("click");
     $('#location_info').accordion({collapsible: true});
     $('#variable_info').accordion({collapsible: true});
 

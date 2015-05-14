@@ -108,7 +108,7 @@ function variables_info() {
     $('#variable_info').accordion("refresh");
 }
 
-function sync_variables() { // to locations
+function sync_variables_to_locations() {
     selected_variables = {};
     $("#location :selected").each(function() {
         var koodi = $(this).val();
@@ -162,7 +162,7 @@ function sync_locations_to_variables() {
 function feature_selection_event() {
     if (syncing) return;
     sync_locations_to_features();
-    sync_variables();
+    sync_variables_to_locations();
     locations_info();
     variables_info();
     set_begin_date();
@@ -195,7 +195,7 @@ function selectLocation() {
     selected_locations = new_selected_locations;
     sync_features_to_locations();
     if (new_selection) {
-        sync_variables();
+        sync_variables_to_locations();
         variables_info();
     }
     locations_info();
