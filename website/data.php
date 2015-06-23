@@ -7,8 +7,15 @@
   <head>
     <title>Eurajoki.info | Mittaustieto</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="shortcut icon" href="/favicon.ico" /> 
     <meta http-equiv="Expires" content="Wed, 13 Nov 2013 20:00:00 GMT" />
+
+    <?php
+    print "<meta property=\"og:url\" content=\"http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."\" />\n";
+    ?>
+    <meta property="og:title" content="Eurajoki.info | Mittaustietoa" />
+    <meta property="og:image" content="http://eurajoki.info/images/mittaustieto.jpg" />
+
+    <link rel="shortcut icon" href="/favicon.ico" /> 
     <?php include "design/include.html"; ?>
 
     <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
@@ -20,17 +27,21 @@
     <script language="javascript" type="text/javascript" src="/jquery/jquery.flot.js"></script>
     <script language="javascript" type="text/javascript" src="/jquery/jquery.flot.time.js"></script>
     <script language="javascript" type="text/javascript" src="/jquery/jquery.flot.navigate.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery.flot.canvas.js"></script>
+
+    <script language="javascript" type="text/javascript" src="/lib/canvas2image.js"></script>
 
     <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
 
-    <script language="javascript" type="text/javascript" src="/app/config.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/base-layers.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/overlays.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/controls.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/sensor-layer.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/map.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/init-data-viewer.js"></script>
+    <script language="javascript" type="text/javascript" src="app/util.js"></script>
+    <script language="javascript" type="text/javascript" src="app/config.js"></script>
+    <script language="javascript" type="text/javascript" src="app/base-layers.js"></script>
+    <script language="javascript" type="text/javascript" src="app/overlays.js"></script>
+    <script language="javascript" type="text/javascript" src="app/controls.js"></script>
+    <script language="javascript" type="text/javascript" src="app/sensor-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="app/map.js"></script>
+    <script language="javascript" type="text/javascript" src="app/init-data-viewer.js"></script>
 
   </head>
   <body>
@@ -69,8 +80,9 @@
               <div id="placeholder" class="flot-placeholder"></div>
             </div>
           </div>
-          <div id="data_link"></div>
-          <div id="page_link"></div>
+          <!-- <button id="save">Lataa kuvaaja</button> -->
+          <div id="data_link" style="float: right;"></div>
+          <div id="share" class="fb-share-button" data-href="data.php" data-layout="icon_link"></div>
         </div>
       </div>
       <div class="FBG">

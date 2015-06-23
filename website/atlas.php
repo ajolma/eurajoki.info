@@ -25,16 +25,16 @@
     <script src="/OpenLayers/OpenLayers.js"></script>
     <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
 
-    <?php include "lib/url2js.php"; ?>
-    <script language="javascript" type="text/javascript" src="/app/config.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/base-layers.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/controls.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/overlays.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/sensor-layer.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/story-layer.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/vegetation-layer.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/map.js"></script>
-    <script language="javascript" type="text/javascript" src="/app/init-atlas.js"></script>
+    <script language="javascript" type="text/javascript" src="app/util.js"></script>
+    <script language="javascript" type="text/javascript" src="app/config.js"></script>
+    <script language="javascript" type="text/javascript" src="app/base-layers.js"></script>
+    <script language="javascript" type="text/javascript" src="app/controls.js"></script>
+    <script language="javascript" type="text/javascript" src="app/overlays.js"></script>
+    <script language="javascript" type="text/javascript" src="app/sensor-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="app/story-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="app/vegetation-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="app/map.js"></script>
+    <script language="javascript" type="text/javascript" src="app/init-atlas.js"></script>
     
   </head>
   <body>

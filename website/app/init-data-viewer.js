@@ -29,8 +29,12 @@ function init() {
     map = make_map();
     
     var layers = taustakartat();
-    
-    layers.push(create_sensor_layer());
+
+    var sensor_layer = create_sensor_layer();
+    sensor_layer.events.register('loadend', sensor_layer, function () {
+        sync_features_to_locations();
+    });
+    layers.push(sensor_layer);
 
     map.addLayers(layers);
 
@@ -59,7 +63,7 @@ function onDatasetsReceived(param) {
     //$('#location_info .ui-accordion-header').trigger("click");
     auto_plot++;
     if (auto_plot == 3) {
-        sync_features_to_locations(); // does not do what we want since the map is probably not ready yet
+        sync_features_to_locations(); // in case loadend event was before we got here
         plot();
     }
 }
@@ -89,6 +93,7 @@ function plot() {
     function onDatasetReceived(data) {
         var ann_time = 1407240000000;
         var options = {
+            canvas: true,
             xaxis: { 
                 mode: "time",
                 timezone: "browser"
@@ -136,22 +141,35 @@ function plot() {
                 }
             });
         });
+
+        $('#save').click(function() {
+            var canvas = plot.getCanvas();
+            Canvas2Image.saveAsPNG(canvas, canvas.width, canvas.height, 'eurajoki.info.mittaustietoa.png', true);
+        });
     }
     
     var get = 'from='+$("#beginDate").val()+'&to='+$("#endDate").val();
+    var i = 0;
     selected_variables.each(function() {
         var v = $(this).val();
         v = v.replace("+","%2B");
-        get += '&suure='+v;
+        get += '&suure'+i+'='+v;
+        i++;
     });
+    i = 0;
     selected_locations.each(function() {
         var v = $(this).val();
-        get += '&paikka='+v;
+        get += '&paikka'+i+'='+v;
+        i++;
     });
     var data_get = config.url.data+'request=GetDataset'+'&max=5000&'+get;
-    var page_get = '/data.php?'+get;
+    var page_get = location.origin+location.pathname+'?'+get;
     $("#data_link").html('<a href="'+data_get+'" target="_blank">linkki JSON-muotoiseen dataan</a>');
-    $("#page_link").html('<a href="'+page_get+'">linkki tähän kuvaajaan</a> (kopiointia varten) <font color="gray">(linkki on hieman rikki: linkistä avautuvalla sivulla paikat eivät tulee valituiksi kartalla)</font>');
+    $('#share').html('<div id="share" class="fb-share-button" data-href="' + page_get + '" data-layout="icon_link"></div>');
+    if (typeof FB !== 'undefined') {
+        FB.XFBML.parse(document.getElementById('share'));
+    }
+    window.history.pushState("", "", page_get);
     
     $.ajax({
         url: data_get,

@@ -48,6 +48,26 @@ function config() {
     if( typeof config.suure === 'string' ) {
         config.suure = [ config.suure ];
     }
+    // hack for fb sharer
+    if (config.suure.length == 0) {
+        var i;
+        for (i = 0; i < 20; i++) {
+            var prop = 'suure'+i;
+            if (prop in config) {
+                config.suure.push(config[prop]);
+            }
+        }
+    }
+    if (config.paikka.length == 0) {
+        var i;
+        for (i = 0; i < 20; i++) {
+            var prop = 'paikka'+i;
+            if (prop in config) {
+                config.paikka.push(config[prop]);
+            }
+        }
+    }
+    // hack ends
     config.url = {mittauspisteet: 'http://'+config.server.wfs.mittauspisteet+'/'+config.app+'/wfs.pl',
                   tarinapaikat: 'http://'+config.server.wfs.tarinapaikat+'/'+config.app+'/wfs.pl',
                   joki: 'http://'+config.server.wfs.joki+'/'+config.app+'/wfs.pl',

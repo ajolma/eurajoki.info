@@ -71,7 +71,7 @@ function create_vegetation_layer(options) {
                 var json_href = "href:'"+href;
                 var json = ', iframe:true, opacity:0.6';
                 json += ", width:'75%', height:'75%'";
-                kasvi = "<span"+a0+"'"+on_open+json_href+hakusana+"'"+json+on_close+">"+hakusana+"</span>";
+                kasvi = "<span"+a0+"'"+on_open+json_href+hakusana+"'"+json+on_close+">"+kasvi+"</span>";
             }
             body += kasvi;
         }

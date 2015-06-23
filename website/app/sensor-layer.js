@@ -50,13 +50,16 @@ function location_info(data) {
         tip = data.kommentti;
         has_tip = '*';
     }
-    info += "<h3><div title=\""+tip+"\">"+data.nimike+' '+has_tip+raw+":</div></h3><div>";
-    var str = data.kuvaus + '<br /><br />';
+    info += '<h3><div title="'+tip+'">'+data.nimike+' '+has_tip+raw+':'+
+        '<div title="Poista valituista" class="mpad" id="'+data.koodi+'" style="float: right;">[X]</div>'+
+        '</div></h3>';
+    var str = data.kuvaus + ' (' + data.nimi + ')<br /><br />';
     if (data.kuvaus2) str += data.kuvaus2 + '<br /><br />';
     str += '<b>Mitatut muuttujat ja datan aikaväli:</b><br />';
     var c = 0;
     $.each(data.muuttujat, function(index, code) {
         var tmp = data.muuttujat2[code];
+        /*
         var selected = false;
         $("#variable :selected").each(function() {
             var suure = $(this).val();
@@ -66,20 +69,23 @@ function location_info(data) {
             }
         });
         if (selected) {
+        */
             var tip = '';
             var has_tip = '';
             if (tmp.kommentti != null) {
                 tip = tmp.kommentti;
                 has_tip = '*';
             }
-            str += "<div title=\""+tip+"\">"+tmp.nimi+': '+tmp.begin+' .. '+tmp.end+' '+has_tip+'</div>';
+        str += '<div title="'+tip+'">'+
+            tmp.nimi+': '+tmp.begin+' .. '+tmp.end+' '+has_tip+
+            '</div>';
             c++;
-        }
+        /*}*/
     });
     if (c == 0) {
-        str = 'Mittaustietoja ei ole toistaiseksi tarjolla valituista muuttujista.';
+        str = 'Mittaustietoja ei ole toistaiseksi tarjolla.';
     }
-    info += str+'</div>';
+    info += '<div>'+str+'</div>';
     $('#location_info').html(info);
 }
 
@@ -90,6 +96,18 @@ function locations_info() {
         location_info(datasets[koodi]);
     });
     $('#location_info').accordion("refresh");
+    $('.mpad').click(function(e){
+        var f = null;
+        $.each(sensor_layer.selectedFeatures, function(i, feature) {
+            if (feature.attributes.koodi == e.toElement.id)
+                f = feature;
+        });
+        syncing = true;
+        selectControl.unselect(f);
+        syncing = false;
+        sync_locations_to_features();
+        locations_info();
+    });
 }
 
 function variables_info() {
@@ -97,7 +115,9 @@ function variables_info() {
     $("#variable :selected").each(function() {
         var suure = $(this).val();
         var o = variables[suure];
-        info += "<h3>"+o.nimi+"</h3><div>";
+        info += "<h3>"+o.nimi+
+            '<div title="Poista valituista" class="mad" id="'+o.suure+'" style="float: right;">[X]</div>'+
+            "</h3>"+"<div>";
         if (o.kuvaus != null)
             info += o.kuvaus+".<br />";
         if (o.yksikko != null)
@@ -106,13 +126,27 @@ function variables_info() {
     });
     $('#variable_info').html(info);
     $('#variable_info').accordion("refresh");
+    $('.mad').click(function(e){
+        var tmp = [];
+        $.each(selected_variables, function(muuttuja, x) {
+            if (muuttuja != e.toElement.id)
+                tmp.push(muuttuja);
+        });
+        $('#variable option').removeAttr('selected');
+        $('#variable').val(tmp);
+        selected_variables = {};
+        $.each(tmp, function(i, muuttuja) {
+            selected_variables[muuttuja] = 1;
+        });
+        variables_info();
+    });
 }
 
 function sync_variables_to_locations() {
     selected_variables = {};
     $("#location :selected").each(function() {
         var koodi = $(this).val();
-        $.each(datasets[koodi].muuttujat, function(j, muuttuja) {
+        $.each(datasets[koodi].muuttujat, function(i, muuttuja) {
             selected_variables[muuttuja] = 1;
         });
     });
@@ -159,13 +193,16 @@ function sync_locations_to_variables() {
     $('#location').val(tmp);
 }
 
-function feature_selection_event() {
+function feature_selection_event(add) {
     if (syncing) return;
     sync_locations_to_features();
-    sync_variables_to_locations();
+    if (add)
+        sync_variables_to_locations();
     locations_info();
-    variables_info();
-    set_begin_date();
+    if (add) {
+        variables_info();
+        set_begin_date();
+    }
 }
 
 function sync_features_to_locations() {
@@ -256,13 +293,13 @@ function create_sensor_layer(options) {
                 contents.block = true;
                 addPopup(feature, contents);
             }
-            feature_selection_event();
+            feature_selection_event(true);
         },
         featureunselected: function() {
             if (options.blockingDialog) {
                 clearPopup({unblock: true});
             }
-            feature_selection_event();
+            feature_selection_event(false);
         }
     });
 
