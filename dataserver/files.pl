@@ -127,18 +127,25 @@ sub page {
 
 sub public_pics {
     my($dbh, $story) = @_;
-    my $sql = "select kuvat.id,filename from kuvat,tarinat ".
-        "where kuvat.story=tarinat.id and tarinat.public and kuvat.story='$story' order by kuvat.id";
+    my $sql = "select otsikko from tarinat where tarinat.id='$story'";
     my $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     my $rv = $sth->execute or croak($dbh->errstr);
-    my $i = 0;
+    my($title) = $sth->fetchrow_array;
+    $title = '' | $title;
     print 
         $html_header,
-        '<html>'.
-        '<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />'.
-        $style.
-        '</head>'.
-        '<body>';
+        '<html>',
+        '<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />',
+        '<title>Eurajoki.info | ',$title,'</title>',
+        $style,
+        '</head>',
+        '<body>',
+        '<h1>Eurajoki.info: Tarina "',$title,'"</h1>';
+    $sql = "select kuvat.id,filename from kuvat,tarinat ".
+        "where kuvat.story=tarinat.id and tarinat.public and kuvat.story='$story' order by kuvat.id";
+    $sth = $dbh->prepare($sql) or croak($dbh->errstr);
+    $rv = $sth->execute or croak($dbh->errstr);
+    my $i = 0;
     while (my($pic,$fn) = $sth->fetchrow_array) {
         my $file = `identify $image_path/$fn`;
         #print STDERR "$file\n";

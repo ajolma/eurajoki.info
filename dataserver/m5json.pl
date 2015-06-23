@@ -98,7 +98,7 @@ sub get_datasets {
     my($dbh) = @_;
     my @sql;
     my $raw = $q->param('raaka');
-    my $sql = "select nimike,nimi,koodi,info,info2,kommentti from mittauskohteet";
+    my $sql = "select nimike,nimi,koodi,info,info2,kommentti from mittauskohteet where julkaistu = TRUE";
     push @sql,$sql;
     my $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     my $rv = $sth->execute or croak($dbh->errstr);
@@ -262,7 +262,19 @@ sub get_dataset {
     my $limit = $q->param('max');
     my $raw = $q->param('raaka');
     my @suureet = $q->param('suure');
+    # hack for fb sharer:
+    if (@suureet == 0) {
+        for my $p ($q->param) {
+            push @suureet, $q->param($p) if ($p =~ /^suure/)
+        }
+    }
     my @paikat = $q->param('paikka');
+    # hack for fb sharer:
+    if (@paikat == 0) {
+        for my $p ($q->param) {
+            push @paikat, $q->param($p) if ($p =~ /^paikka/)
+        }
+    }
     (@suureet != 0 and @paikat != 0) or croak("Required param 'paikka' or 'suure' missing.");
     my $from = $q->param('from');
     my $to = $q->param('to');
@@ -311,7 +323,7 @@ sub get_dataset {
     $sql = 
 	"select paikka,suure,aika,arvo,lippu from $table where ".
 	"($paikka_sql) and ($suure_sql) and aika>='$from' and aika<='$to'";
-    $sql .= " limit $limit" if $limit;
+    #$sql .= " limit $limit" if $limit;
     $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     $rv = $sth->execute or croak($dbh->errstr);
     %ajat = ();
@@ -327,6 +339,13 @@ sub get_dataset {
 	$paikat{$paikka} = 1;
         my($yr,$mo,$day,$hr,$min,$sec) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
 	$mo--;
+
+        # if hr:min:sec == 00:00:00, the time is not set, set it to noon 12:00:00
+        if ($hr eq '00' and $min eq '00' and $sec eq '00') {
+            $hr = 12;
+            $aika = "$yr-$mo-$day $hr:$min:$sec";
+        }
+
         my $x = $data{$aika};
 	$data{$aika}{$paikka}{$suure} = $arvo;
         $have_data_from_day{"$yr-$mo-$day"}{$paikka}{$suure} = 1;
@@ -340,7 +359,7 @@ sub get_dataset {
     $sql = 
 	"select paikka,suure,aika,arvo,lippu from $table where ".
 	"($paikka_sql) and ($suure_sql) and aika>='$from' and aika<='$to'";
-    $sql .= " limit $limit" if $limit;
+    #$sql .= " limit $limit" if $limit;
     $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     $rv = $sth->execute or croak($dbh->errstr);
     while (1) {
@@ -386,10 +405,12 @@ sub get_dataset {
     }
 
     for my $suure (@suureet) {
+        my $inc_axis = 0;
         for my $paikka (@paikat) {
             next unless $have_data{$paikka}{$suure};
             print ",\n" unless $first;
             $first = 0;
+            $inc_axis = 1;
             print "{\"label\": \"$paikka2nimi{$paikka}, $suureet{$suure}{nimi}\",\n";
             print "\"yaxis\": $yaxis,\n";
             print "\"data\": [\n";
@@ -415,7 +436,7 @@ sub get_dataset {
             print "],\"$suureet{$suure}{visualisointi}\": { \"show\": true }";
             print "}\n";
         }
-        $yaxis++;
+        $yaxis++ if $inc_axis;
     }
     print "]\n";
 }
