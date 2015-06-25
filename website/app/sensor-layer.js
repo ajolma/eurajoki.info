@@ -142,14 +142,22 @@ function variables_info() {
     });
 }
 
-function sync_variables_to_locations() {
-    selected_variables = {};
-    $("#location :selected").each(function() {
-        var koodi = $(this).val();
-        $.each(datasets[koodi].muuttujat, function(i, muuttuja) {
+function sync_variables_to_locations(feature) {
+    if (feature != null) {
+        // only add variables from this location to selected_variables
+        $.each(datasets[feature.attributes.koodi].muuttujat, function(i, muuttuja) {
             selected_variables[muuttuja] = 1;
         });
-    });
+    } else {
+        // add all variables from all locations to selected_variables
+        selected_variables = {};
+        $("#location :selected").each(function() {
+            var koodi = $(this).val();
+            $.each(datasets[koodi].muuttujat, function(i, muuttuja) {
+                selected_variables[muuttuja] = 1;
+            });
+        });
+    }
     var tmp = [];
     $.each(selected_variables, function(muuttuja, x) {
         tmp.push(muuttuja);
@@ -193,13 +201,14 @@ function sync_locations_to_variables() {
     $('#location').val(tmp);
 }
 
-function feature_selection_event(add) {
+function feature_selection_event(feature) {
     if (syncing) return;
     sync_locations_to_features();
-    if (add)
-        sync_variables_to_locations();
+    if (feature != null) {
+        sync_variables_to_locations(feature);
+    }
     locations_info();
-    if (add) {
+    if (feature != null) {
         variables_info();
         set_begin_date();
     }
@@ -232,7 +241,7 @@ function selectLocation() {
     selected_locations = new_selected_locations;
     sync_features_to_locations();
     if (new_selection) {
-        sync_variables_to_locations();
+        sync_variables_to_locations(null);
         variables_info();
     }
     locations_info();
@@ -293,13 +302,13 @@ function create_sensor_layer(options) {
                 contents.block = true;
                 addPopup(feature, contents);
             }
-            feature_selection_event(true);
+            feature_selection_event(feature);
         },
         featureunselected: function() {
             if (options.blockingDialog) {
                 clearPopup({unblock: true});
             }
-            feature_selection_event(false);
+            feature_selection_event(null);
         }
     });
 
