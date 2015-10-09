@@ -117,10 +117,15 @@ sub page {
     }
 
     if ($cmd eq '' or $cmd eq 'Hae') {
-        print "<script>(function(){setSuure(\"$suure\")})();</script>";
+        lastScript($suure);
     }
 
     print $q->end_html;
+}
+
+sub lastScript {
+    my ($suure) = @_;
+    print "<script>(function(){setSuure(\"$suure\")})();</script>";
 }
 
 sub HaeForm {
@@ -164,9 +169,9 @@ sub TallennaForm {
         "Tallennetaan paikasta <b>$paikat->{$paikka}</b> dataa <b>$suureet->{$suure}</b>  ",
         $q->submit('cmd','Palaa tallentamatta'),
         '<p/><p>',
-        "<p>Anna data yksi arvo rivillä, järjestyksessä päivämäärä kellonaika arvo [lippu].",
-        " Lippu annetaan vain tietyissä tapauksissa.",
-        " Päivämäärä ja kellonaika voi olla esim. muodossa pp.kk.vvvv hh.mm ja molemmat pitää antaa.",
+        "<p>Anna data yksi arvo rivillä, järjestyksessä päivämäärä [kellonaika] arvo [lippu].",
+        " Kellonaikaa ei tarvitse antaa, jos mittaus on päiväkohtainen. Lippu annetaan vain tietyissä tapauksissa.",
+        " Päivämäärä voi olla esim. muodossa pp.kk.vvvv ja ja kellonaika esim. muodossa hh.mm.",
         " Jos annettu kellonaika on 12.00.00 tieto tulkitaan päiväkohtaiseksi.",
         " Jos kellonaika kuitenkin on merkitsevä, niin anna rivillä myös lippu 'k'.</p>",
         " <p>Anna arvoksi 'x', jos tieto puuttuu, ja 'poista', jos haluat poistaa arvon tietokannasta.",
@@ -174,7 +179,7 @@ sub TallennaForm {
         " Jos kaikkia rivejä ei onnistuta tulkitsemaan tai tallennusta vain testataan,",
         " mitään tietoa ei tallenneta. Ohjelma ilmoittaa tulkintaongelmista ja virheistä.</p>",
         '<p/>',
-        '<pre>päivämäärä kellonaika mittausarvo [lippu]</pre>',
+        '<pre>päivämäärä [kellonaika] mittausarvo [lippu]</pre>',
         $q->textarea( -name => 'Data',
                       -rows => 40,
                       -columns => 60 ),
@@ -223,6 +228,8 @@ sub Tallenna {
         }
     }
     $sql .= 'commit;';
+    print "Virheitä ei havaittu.<br />" unless $warn;
+    print "SQL:ssä mahdollisesti olevat virheet näkyvät vasta tallennettaessa.<br />" if $opt eq 'test';
     print "<br />Tallennus-SQL on:<pre><code>$sql</pre></code>\n";
     my $ok;
     if (!$warn && $opt ne 'test') {
@@ -230,6 +237,7 @@ sub Tallenna {
         if ($ok) {
             print '<p><b>Tallennus OK</b></p>';
             HaeForm($json, $a_paikat, $a_suureet, $h_paikat, $h_suureet);
+            lastScript($suure);
         } else {
             mywarn($dbh->errstr);
         }
@@ -374,41 +382,48 @@ sub tulkitse_rivi { # pvm kellonaika arvo
         $aika = "$y-$m-$d";
     }
 
-    my $time = shift @elementit;
-    $ok = 1;
-    if (!$time) {
-        $warn = mywarn("Kellonaika puuttuu");
-        $ok = 0;
-    } elsif ($time =~ /^(\d+)$/) {
-        $h = $1;
-        $m = 0;
-        $s = 0;
-    } elsif ($time =~ /^(\d+)[:\.](\d+)$/) {
-        $h = $1;
-        $m = $2;
-        $s = 0;
-    } elsif ($time =~ /^(\d+)[:\.](\d+)[:\.](\d+)$/) {
-        $h = $1;
-        $m = $2;
-        $s = $3;
-    } else {
-        $warn = mywarn("En pysty tulkitsemaan kellonaikaa: '$time'");
-        $ok = 0;
-    }
-    if ($ok) {
-        $warn = mywarn("Väärä kellonaika: '$time'") unless 
-            ($h <= 24) && ($h >= 0) && ($m <= 60) && ($m >= 0) && ($s <= 60) && ($s >= 0);
-        $ok = !$warn;
-    }
-    if ($ok) {
-        $m = '0'.$m if int($m) < 10;
-        $s = '0'.$s if int($s) < 10;
-        $time = "$h:$m:$s";
-    } else {
-        $time = "";
-    }
     my $lippu = 0;
-    $lippu = 10 if $time eq '12:00:00';
+    my $time;
+    if (@elementit > 2) {
+        $time = shift @elementit;
+        $ok = 1;
+        if (!$time) {
+            $warn = mywarn("Kellonaika puuttuu");
+            $ok = 0;
+        } elsif ($time =~ /^(\d+)$/) {
+            $h = $1;
+            $m = 0;
+            $s = 0;
+        } elsif ($time =~ /^(\d+)[:\.](\d+)$/) {
+            $h = $1;
+            $m = $2;
+            $s = 0;
+        } elsif ($time =~ /^(\d+)[:\.](\d+)[:\.](\d+)$/) {
+            $h = $1;
+            $m = $2;
+            $s = $3;
+        } else {
+            $warn = mywarn("En pysty tulkitsemaan kellonaikaa: '$time'");
+            $ok = 0;
+        }
+        if ($ok) {
+            $warn = mywarn("Väärä kellonaika: '$time'") unless 
+                ($h <= 24) && ($h >= 0) && ($m <= 60) && ($m >= 0) && ($s <= 60) && ($s >= 0);
+            $ok = !$warn;
+        }
+        if ($ok) {
+            $m = '0'.$m if int($m) < 10;
+            $s = '0'.$s if int($s) < 10;
+            $time = "$h:$m:$s";
+        } else {
+            $time = "";
+        }
+        $lippu = 10 if $time eq '12:00:00';
+    } else {
+        $time = "12:00:00";
+        $lippu = 10;
+    }
+
     $aika .= " $time";
     
     my $arvo = shift @elementit;
