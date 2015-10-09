@@ -279,7 +279,7 @@ function create_sensor_layer(options) {
             version: "1.1.0",
             srsName: "EPSG:3857",
             url: config.url.mittauspisteet,
-            featureType: config.prefix.mittauspisteet+".mittauskohteet.geom",
+            featureType: config.featureType.sensors,
             outputFormat: "GML2"
         }),
         visibility: options.visibility,

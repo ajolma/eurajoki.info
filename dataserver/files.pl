@@ -14,8 +14,9 @@ use Time::HiRes qw/gettimeofday/;
 use DBI;
 use CGI;
 
-my $me = 'http://54.247.187.88/Eurajoki/files.pl';
-my $image_path = '/l/www/image-store';
+my $url_base = 'http://ajolma.net/Eurajoki/';
+my $me = $url_base.'files.pl';
+my $image_path = '/var/www/image-store';
 
 my $style = '<style>.image{';
 $style .= 'text-align:center;';
@@ -151,7 +152,7 @@ sub public_pics {
         #print STDERR "$file\n";
         my($w,$h) = $file =~ / (\d+)x(\d+) /;
         $i++;
-        print "<div class=\"image\"><img src=\"files.pl?pic=$pic\" width=\"$w\" height=\"$h\" /></div>";
+        print "<div class=\"image\"><img src=\"$me?pic=$pic\" width=\"$w\" height=\"$h\" /></div>";
     }
     if ($i == 0) {
         print "Tähän tarinaan ei ole liitetty vielä yhtään kuvaa.";
@@ -279,9 +280,12 @@ sub public_pic {
 
     my $file = "$image_path/$fn";
     my $length = (stat($file)) [10];
-    print "Content-type: image/jpeg\n";
+    print $q->header( -type => 'image/jpeg',
+                      -expires => '+1s',
+                      -Access_Control_Allow_Origin => '*' );
+    #print "Content-type: image/jpeg\n";
     #print "Content-length: $length\n"; # Chrome doesn't like this
-    print "\n";
+    #print "\n";
     binmode STDOUT;
     open (FH,'<', $file) || die "Could not open $file: $!";
     my $buffer = "";

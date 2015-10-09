@@ -7,11 +7,10 @@ var config;
 function config() {
     config = {numZoomLevels: 20,
               baseLayers: [
-                  'Mapbox',
-                  'OpenStreetMap',
                   'GoogleMap',
                   'GoogleTerrain',
                   'GoogleSat',
+                  'OpenStreetMap',
                   'MMLTausta',
                   'MMLPerus',
                   'MMLOrto'                  
@@ -37,6 +36,9 @@ function config() {
                   mittauspisteet: 'ej',
                   tarinapaikat: 'ej',
                   joki: 'local'
+              },
+              layer : {
+                  mittauspisteet: 'mittauskohteet2.geom'
               },
               from: 0,
               to: 0
@@ -77,4 +79,6 @@ function config() {
                   kasvillisuus: 'http://'+config.server.kasvillisuus+'/'+config.app+'/data.pl?',
                   overlay_tiles: 'http://'+config.server.overlay_tiles+'/'+config.app
                  };
+    config.featureType = {sensors: config.prefix.mittauspisteet+"."+config.layer.mittauspisteet
+                         };
 }

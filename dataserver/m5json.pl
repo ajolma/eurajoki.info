@@ -164,15 +164,39 @@ sub get_datasets {
                 push @sql,$sql;
                 $sth = $dbh->prepare($sql) or croak($dbh->errstr);
                 $rv = $sth->execute or croak($dbh->errstr);
-                ($codes{$code}{$type}{$var}{begin}) = $sth->fetchrow_array;
-                $variables{$code}{$var}{begin} = $codes{$code}{$type}{$var}{begin};
+                my $time = $sth->fetchrow_array;
+                if ($time =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/) {
+                    my($yr,$mo,$day) = ($1,$2,$3);
+                    $time = "$yr-$mo-$day";
+                } else {
+                    print STDERR "Can't parse time: $time\n";
+                    $time = "1900-01-01";
+                }
+                if (defined $variables{$code}{$var}{begin}) {
+                    $variables{$code}{$var}{begin} = $time if $time lt $variables{$code}{$var}{begin};
+                } else {
+                    $variables{$code}{$var}{begin} = $time;
+                }
+
                 $sql = "select aika from $table where paikka='$code' and suure='$var'".
                     " order by aika desc limit 1";
                 push @sql,$sql;
                 $sth = $dbh->prepare($sql) or croak($dbh->errstr);
                 $rv = $sth->execute or croak($dbh->errstr);
-                ($codes{$code}{$type}{$var}{end}) = $sth->fetchrow_array;
-                $variables{$code}{$var}{end} = $codes{$code}{$type}{$var}{end};
+                $time = $sth->fetchrow_array;
+                if ($time =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/) {
+                    my($yr,$mo,$day) = ($1,$2,$3);
+                    $time = "$yr-$mo-$day";
+                } else {
+                    print STDERR "Can't parse time: $time\n";
+                    $time = "1900-01-01";
+                }
+                if (defined $variables{$code}{$var}{end}) {
+                    $variables{$code}{$var}{end} = $time if $time gt $variables{$code}{$var}{end};
+                } else {
+                    $variables{$code}{$var}{end} = $time;
+                }
+
             }
         }
     }
@@ -195,34 +219,18 @@ sub get_datasets {
         my @vars;
         my @begin;
         my @end;
-        if (1) {
-            for my $var (sort {$var2var{$a} cmp $var2var{$b}} keys %{$variables{$code}}) {
-                my @t;
-                @t = $variables{$code}{$var}{begin} =~ /^(\d+)-(\d+)-(\d+)/;
-                @begin = @t if (!@begin or cmp_dates2(\@t,\@begin) < 0);
-                for (@t) {$_+=0};
-                my $t0 = "$t[2].$t[1].$t[0]";
-                @t = $variables{$code}{$var}{end} =~ /^(\d+)-(\d+)-(\d+)/;
-                @end = @t if (!@end or cmp_dates2(\@t,\@end) < 0);
-                for (@t) {$_+=0};
-                my $t1 = "$t[2].$t[1].$t[0]";
-                $info .= "----$var2var{$var}: $t0 .. $t1; ";
-                push @vars, $var;
-            }
-        } else {
-            for my $type (sort keys %{$codes{$code}}) {
-                $info .= $type.':; ';
-                for my $var (sort keys %{$codes{$code}{$type}}) {
-                    my @t;
-                    @t = $codes{$code}{$type}{$var}{begin} =~ /^(\d+)-(\d+)-(\d+)/;
-                    for (@t) {$_+=0};
-                    my $t0 = "$t[2].$t[1].$t[0]";
-                    @t = $codes{$code}{$type}{$var}{end} =~ /^(\d+)-(\d+)-(\d+)/;
-                    for (@t) {$_+=0};
-                    my $t1 = "$t[2].$t[1].$t[0]";
-                    $info .= "----$var2var{$var}: $t0 .. $t1; ";
-                }
-            }
+        for my $var (sort {$var2var{$a} cmp $var2var{$b}} keys %{$variables{$code}}) {
+            my @t;
+            @t = $variables{$code}{$var}{begin} =~ /^(\d+)-(\d+)-(\d+)/;
+            @begin = @t if (!@begin or cmp_dates2(\@t,\@begin) < 0);
+            for (@t) {$_+=0};
+            my $t0 = "$t[2].$t[1].$t[0]";
+            @t = $variables{$code}{$var}{end} =~ /^(\d+)-(\d+)-(\d+)/;
+            @end = @t if (!@end or cmp_dates2(\@t,\@end) < 0);
+            for (@t) {$_+=0};
+            my $t1 = "$t[2].$t[1].$t[0]";
+            $info .= "----$var2var{$var}: $t0 .. $t1; ";
+            push @vars, $var;
         }
         $datasets{$code}{muuttujat} = \@vars;
         $datasets{$code}{info} = $info;
@@ -261,6 +269,7 @@ sub get_dataset {
     my($dbh) = @_;
     my $limit = $q->param('max');
     my $raw = $q->param('raaka');
+    my $timefmt = $q->param('timefmt');
     my @suureet = $q->param('suure');
     # hack for fb sharer:
     if (@suureet == 0) {
@@ -278,7 +287,8 @@ sub get_dataset {
     (@suureet != 0 and @paikat != 0) or croak("Required param 'paikka' or 'suure' missing.");
     my $from = $q->param('from');
     my $to = $q->param('to');
-    ($from and $to) or croak("Required param 'from' or 'to' missing.");
+    $from = defined $from ? "and aika>='$from'" : '';
+    $to = defined $to ? "and aika<='$to'" : '';
 
     #print STDERR "suure=$suure, paikka=[@paikat]\n";
 
@@ -319,10 +329,12 @@ sub get_dataset {
         $suureet{$suure}{visualisointi} = $visualisointi;
     }
 
+    
+
     my $table = $raw ? 'data' : 'data_tarkistettu';
     $sql = 
 	"select paikka,suure,aika,arvo,lippu from $table where ".
-	"($paikka_sql) and ($suure_sql) and aika>='$from' and aika<='$to'";
+	"($paikka_sql) and ($suure_sql) $from $to";
     #$sql .= " limit $limit" if $limit;
     $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     $rv = $sth->execute or croak($dbh->errstr);
@@ -338,7 +350,6 @@ sub get_dataset {
         $arvo = 'null' unless defined $arvo;
 	$paikat{$paikka} = 1;
         my($yr,$mo,$day,$hr,$min,$sec) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
-	$mo--;
 
         # if hr:min:sec == 00:00:00, the time is not set, set it to noon 12:00:00
         if ($hr eq '00' and $min eq '00' and $sec eq '00') {
@@ -352,13 +363,14 @@ sub get_dataset {
         $flags{$aika}{$paikka}{$suure} = $lippu;
         $have_data{$paikka}{$suure} = 1;
 	next if $x;
+        $mo--;
 	$ajat{$aika} = [$yr,$mo,$day,$hr,$min,$sec];
     }
     # insert daily data for those days from which there is no "continuous" data
     $table = $raw ? 'data_daily' : 'data_daily_tarkistettu';
     $sql = 
 	"select paikka,suure,aika,arvo,lippu from $table where ".
-	"($paikka_sql) and ($suure_sql) and aika>='$from' and aika<='$to'";
+	"($paikka_sql) and ($suure_sql) $from $to";
     #$sql .= " limit $limit" if $limit;
     $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     $rv = $sth->execute or croak($dbh->errstr);
@@ -368,7 +380,6 @@ sub get_dataset {
         $arvo = 'null' unless defined $arvo;
 	$paikat{$paikka} = 1;
         my($yr,$mo,$day) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/;
-        $mo--;
         # is there data from this place on this day already?
         next if $have_data_from_day{$aika}{$paikka}{$suure};
 	my $x = $data{$aika};
@@ -377,6 +388,7 @@ sub get_dataset {
         $have_data{$paikka}{$suure} = 1;
 	next if $x;
         # set it to the noon
+        $mo--;
 	$ajat{$aika} = [$yr,$mo,$day,12,0,0];
     }
     my @aika = sort cmp_dates keys %ajat;
@@ -419,17 +431,21 @@ sub get_dataset {
                 next unless $data{$aika}{$paikka}{$suure};
                 print ",\n" unless $first2;
                 $first2 = 0;
-                # time is needed in JavaScript timestamps, which is milliseconds since 1970/01/01 UTC
-                # our data is in timezoneless timestamp (implicitly in Europe/Helsinki TZ)
-                # this server is in Finland, thus timelocal should work
-                # but this is not a generic solution!
-                my $time = timelocal(@{$ajat{$aika}}[5,4,3,2,1,0]);
-                #my $time = Delta_Days(1970, 1, 1, @{$ajat{$aika}}[0,1,2]); # days
-                #$time *= 60 * 60 * 24;
-                #$time += $a[3]*60*60 + $a[4]*60 + $a[5];
                 if ($data{$aika}{$paikka}{$suure} eq 'null') {
                     print 'null';
+                } elsif ($timefmt eq 'fi') { # 'D.M.Y H:M:S') {
+                    my $time = "\"".($ajat{$aika}[2]+0).".".($ajat{$aika}[1]+1).".$ajat{$aika}[0]".
+                        " $ajat{$aika}[3]:$ajat{$aika}[4]:$ajat{$aika}[5]\"";
+                    print "[",$time,",$data{$aika}{$paikka}{$suure}]";
                 } else {
+                    # time is needed in JavaScript timestamps, which is milliseconds since 1970/01/01 UTC
+                    # our data is in timezoneless timestamp (implicitly in Europe/Helsinki TZ)
+                    # this server is in Finland, thus timelocal should work
+                    # but this is not a generic solution!
+                    my $time = timelocal(@{$ajat{$aika}}[5,4,3,2,1,0]);
+                    #my $time = Delta_Days(1970, 1, 1, @{$ajat{$aika}}[0,1,2]); # days
+                    #$time *= 60 * 60 * 24;
+                    #$time += $a[3]*60*60 + $a[4]*60 + $a[5];
                     print "[",$time*1000,",$data{$aika}{$paikka}{$suure}]";
                 }
             }
