@@ -170,12 +170,13 @@ sub TallennaForm {
         $q->submit('cmd','Palaa tallentamatta'),
         '<p/><p>',
         "<p>Anna data yksi arvo rivillä, järjestyksessä päivämäärä [kellonaika] arvo [lippu].",
-        " Kellonaikaa ei tarvitse antaa, jos mittaus on päiväkohtainen. Lippu annetaan vain tietyissä tapauksissa.",
-        " Päivämäärä voi olla esim. muodossa pp.kk.vvvv ja ja kellonaika esim. muodossa hh.mm.",
-        " Jos annettu kellonaika on 12.00.00 tieto tulkitaan päiväkohtaiseksi.",
-        " Jos kellonaika kuitenkin on merkitsevä, niin anna rivillä myös lippu 'k'.</p>",
+        " Älä anna kellonaikaa jos havaintoarvo on päiväkohtainen.",
+        " Lippua ei yleensä tarvitse antaa. Lipulla ilmaistaan yleensä havainnon päiväkohtaisuutta.",
+        " Lipun muoto on ln, jossa n on lippunumero (ks. tietokanta).",
+        " Päivämäärä voi olla esim. muodossa pp.kk.vvvv ja ja kellonaika esim. muodossa hh:mm.</p>",
         " <p>Anna arvoksi 'x', jos tieto puuttuu, ja 'poista', jos haluat poistaa arvon tietokannasta.",
-        " Arvon desimaalipilkku muutetaan desimaalipisteeksi.",
+        " Jos haluat muuttaa tiedon, anna uusi tieto.",
+        " Arvon desimaalipilkku muutetaan desimaalipisteeksi eli älä anna pilkkua tuhaterottimena.",
         " Jos kaikkia rivejä ei onnistuta tulkitsemaan tai tallennusta vain testataan,",
         " mitään tietoa ei tallenneta. Ohjelma ilmoittaa tulkintaongelmista ja virheistä.</p>",
         '<p/>',
@@ -194,13 +195,13 @@ sub Tallenna {
 
     my @data = split(/\n/,$params->{Data});
 
-    my $sql = "select aika,arvo from data ".
+    my $sql = "select aika,arvo,lippu from data ".
         "where paikka='$paikka' and suure='$params->{Suure}'";
     my $sth = $dbh->prepare($sql) or error($dbh->errstr);
     my $rv = $sth->execute or error($dbh->errstr);
     my %data;
-    while (my($aika,$arvo) = $sth->fetchrow_array) {
-        $data{$aika} = $arvo;
+    while (my($aika,$arvo,$lippu) = $sth->fetchrow_array) {
+        $data{"$aika $lippu"} = $arvo;
     }
     
     $sql = "begin;\n";
@@ -212,13 +213,13 @@ sub Tallenna {
         $i++;
         unless ($w) {
             if ($arvo eq 'delete') {
-                if (exists $data{$aika}) {
+                if (exists $data{"$aika $lippu"}) {
                     $sql .= "delete from data ".
-                        "where aika='$aika' and paikka='$paikka' and suure='$suure';\n";
+                        "where aika='$aika' and paikka='$paikka' and suure='$suure' and lippu=$lippu;\n";
                 } else {
                     $warn = mywarn("Ajanhetkeltä '$aika' ei ole mittausarvoa, jonka voisi poistaa.");
                 }
-            } elsif (exists $data{$aika}) {
+            } elsif (exists $data{"$aika $lippu"}) {
                 $sql .= "update data set arvo=$arvo,lippu=$lippu ".
                     "where aika='$aika' and paikka='$paikka' and suure='$suure';\n";
             } else {
@@ -287,6 +288,11 @@ sub Hae {
     $rv = $sth->execute or error($dbh->errstr);
     my @input;
     while (my($aika,$arvo,$lippu) = $sth->fetchrow_array) {
+        unless (defined $arvo) {
+            $arvo = '';
+            $lippu = int($lippu/10)*10; # filter out detail flags, leave daily value (or some other similar)
+            $lippu = '' if $lippu == 0; # quiet
+        }
         unshift @input, [$aika,$arvo,$lippu];
     }
 
@@ -300,9 +306,9 @@ sub Hae {
     for (@input) {
         my($aika,$arvo,$lippu) = @$_;
         
-        $lippu = $liput{$lippu} if defined $lippu;
-        for ($aika,$arvo,$lippu) { $_ = '' unless defined $_ }
+        $lippu = $liput{$lippu} if $lippu ne '';
         push @data, [$aika,$arvo];
+        $arvo = 'Tieto puuttuu' if $arvo eq '';
         push @html, "<tr><td>$aika</td><td>$arvo</td><td>$lippu</td></tr>\n";
  
     }
@@ -383,8 +389,8 @@ sub tulkitse_rivi { # pvm kellonaika arvo
     }
 
     my $lippu = 0;
-    my $time;
-    if (@elementit > 2) {
+    my $time = '';
+    if (@elementit > 1) {
         $time = shift @elementit;
         $ok = 1;
         if (!$time) {
@@ -412,13 +418,12 @@ sub tulkitse_rivi { # pvm kellonaika arvo
             $ok = !$warn;
         }
         if ($ok) {
-            $m = '0'.$m if int($m) < 10;
-            $s = '0'.$s if int($s) < 10;
+            $m = '0'.int($m) if int($m) < 10;
+            $s = '0'.int($s) if int($s) < 10;
             $time = "$h:$m:$s";
         } else {
             $time = "";
         }
-        $lippu = 10 if $time eq '12:00:00';
     } else {
         $time = "12:00:00";
         $lippu = 10;
@@ -442,10 +447,10 @@ sub tulkitse_rivi { # pvm kellonaika arvo
 
     if (@elementit) {
         my $l = shift @elementit;
-        if ($l eq 'k') {
-            $lippu = 0;
+        if ($l =~ /^l(\d+)$/) {
+            $lippu = $1;
         } else {
-            $warn = mywarn("Tuntematon lippukoodi: $l");
+            $warn = mywarn("En pysty tulkitsemaan lippukoodia: $l");
         }
     }
 

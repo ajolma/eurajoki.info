@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/opt/perl/current/bin/perl -w
 
 # This file is part of eurajoki.info
 # https://github.com/ajolma/eurajoki.info
@@ -7,13 +7,18 @@
 use utf8;
 use strict;
 use IO::Handle;
-use Time::Local 'timelocal';
+use DateTime;
+use Time::Local qw/timelocal timelocal_nocheck/;
 use Date::Calc qw/Delta_Days/;
 use Carp;
 use Encode;
 use DBI;
 use CGI;
 use JSON;
+
+my $debug = 0;
+
+binmode(STDOUT, ":utf8");
 
 my $q = CGI->new;
 if ($ENV{REQUEST_METHOD} eq 'OPTIONS') {
@@ -33,6 +38,7 @@ if ($ENV{REQUEST_METHOD} eq 'OPTIONS') {
         page();
     };
     if ($@) {
+        print STDERR "$@\n";
         my $json = JSON->new;
         my($msg) = $@ =~ /(.*)? at /;
         my $error = {
@@ -134,70 +140,55 @@ sub get_datasets {
 
     my %variables;
     for my $code (keys %codes) {
-        for my $type ('Jatkuva mittaus',encode(utf8=>'Päivittäiset arvot')) {
-            my $table;
-            if ($type eq 'Jatkuva mittaus') {
-                if ($raw) {
-                    $table = 'data';
-                } else {
-                    $table = 'data_tarkistettu';
-                }
-            } else {
-                if ($raw) {
-                    $table = 'data_daily';
-                } else {
-                    $table = 'data_daily_tarkistettu';
-                }
-            }
-            $sql = "select distinct suure from $table where paikka='$code' order by suure";
+        my $table = 'data';
+        $sql = "select distinct suure from $table where paikka='$code' order by suure";
+        push @sql,$sql;
+        $sth = $dbh->prepare($sql) or croak($dbh->errstr);
+        $rv = $sth->execute or croak($dbh->errstr);
+        my @vars;
+        while (my($var) = $sth->fetchrow_array) {
+            next unless $var2var{$var};
+            push @vars, $var;
+        }
+        for my $var (@vars) {
+            $sql = "select aika from $table where paikka='$code' and suure='$var'".
+                " order by aika asc limit 1";
             push @sql,$sql;
             $sth = $dbh->prepare($sql) or croak($dbh->errstr);
             $rv = $sth->execute or croak($dbh->errstr);
-            my @vars;
-            while (my($var) = $sth->fetchrow_array) {
-                next unless $var2var{$var};
-                push @vars, $var;
+            my $time = $sth->fetchrow_array;
+            if ($time =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/) {
+                my($yr,$mo,$day) = ($1,$2,$3);
+                $time = "$yr-$mo-$day";
+            } else {
+                print STDERR "Can't parse time: $time\n";
+                $time = "1900-01-01";
             }
-            for my $var (@vars) {
-                $sql = "select aika from $table where paikka='$code' and suure='$var'".
-                    " order by aika asc limit 1";
-                push @sql,$sql;
-                $sth = $dbh->prepare($sql) or croak($dbh->errstr);
-                $rv = $sth->execute or croak($dbh->errstr);
-                my $time = $sth->fetchrow_array;
-                if ($time =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/) {
-                    my($yr,$mo,$day) = ($1,$2,$3);
-                    $time = "$yr-$mo-$day";
-                } else {
-                    print STDERR "Can't parse time: $time\n";
-                    $time = "1900-01-01";
-                }
-                if (defined $variables{$code}{$var}{begin}) {
-                    $variables{$code}{$var}{begin} = $time if $time lt $variables{$code}{$var}{begin};
-                } else {
-                    $variables{$code}{$var}{begin} = $time;
-                }
-
-                $sql = "select aika from $table where paikka='$code' and suure='$var'".
-                    " order by aika desc limit 1";
-                push @sql,$sql;
-                $sth = $dbh->prepare($sql) or croak($dbh->errstr);
-                $rv = $sth->execute or croak($dbh->errstr);
-                $time = $sth->fetchrow_array;
-                if ($time =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/) {
-                    my($yr,$mo,$day) = ($1,$2,$3);
-                    $time = "$yr-$mo-$day";
-                } else {
-                    print STDERR "Can't parse time: $time\n";
-                    $time = "1900-01-01";
-                }
-                if (defined $variables{$code}{$var}{end}) {
-                    $variables{$code}{$var}{end} = $time if $time gt $variables{$code}{$var}{end};
-                } else {
-                    $variables{$code}{$var}{end} = $time;
-                }
-
+            if (defined $variables{$code}{$var}{begin}) {
+                $variables{$code}{$var}{begin} = $time if $time lt $variables{$code}{$var}{begin};
+            } else {
+                $variables{$code}{$var}{begin} = $time;
             }
+
+            $sql = "select aika from $table where paikka='$code' and suure='$var'".
+                " order by aika desc limit 1";
+            push @sql,$sql;
+            $sth = $dbh->prepare($sql) or croak($dbh->errstr);
+            $rv = $sth->execute or croak($dbh->errstr);
+            $time = $sth->fetchrow_array;
+            if ($time =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/) {
+                my($yr,$mo,$day) = ($1,$2,$3);
+                $time = "$yr-$mo-$day";
+            } else {
+                print STDERR "Can't parse time: $time\n";
+                $time = "1900-01-01";
+            }
+            if (defined $variables{$code}{$var}{end}) {
+                $variables{$code}{$var}{end} = $time if $time gt $variables{$code}{$var}{end};
+            } else {
+                $variables{$code}{$var}{end} = $time;
+            }
+            
         }
     }
 
@@ -222,11 +213,11 @@ sub get_datasets {
         for my $var (sort {$var2var{$a} cmp $var2var{$b}} keys %{$variables{$code}}) {
             my @t;
             @t = $variables{$code}{$var}{begin} =~ /^(\d+)-(\d+)-(\d+)/;
-            @begin = @t if (!@begin or cmp_dates2(\@t,\@begin) < 0);
+            @begin = @t if (!@begin or cmp_dates(\@t,\@begin) < 0);
             for (@t) {$_+=0};
             my $t0 = "$t[2].$t[1].$t[0]";
             @t = $variables{$code}{$var}{end} =~ /^(\d+)-(\d+)-(\d+)/;
-            @end = @t if (!@end or cmp_dates2(\@t,\@end) < 0);
+            @end = @t if (!@end or cmp_dates(\@t,\@end) < 0);
             for (@t) {$_+=0};
             my $t1 = "$t[2].$t[1].$t[0]";
             $info .= "----$var2var{$var}: $t0 .. $t1; ";
@@ -263,25 +254,23 @@ sub get_datasets {
     print $json->encode(\%datasets);
 }
 
-my %ajat;
-
 sub get_dataset {
     my($dbh) = @_;
     my $limit = $q->param('max');
     my $raw = $q->param('raaka');
-    my $timefmt = $q->param('timefmt');
-    my @suureet = $q->param('suure');
+    my $timefmt = $q->param('timefmt') || '';
+    my @suureet = $q->multi_param('suure');
     # hack for fb sharer:
     if (@suureet == 0) {
         for my $p ($q->param) {
-            push @suureet, $q->param($p) if ($p =~ /^suure/)
+            push @suureet, $q->multi_param($p) if ($p =~ /^suure/)
         }
     }
-    my @paikat = $q->param('paikka');
+    my @paikat = $q->multi_param('paikka');
     # hack for fb sharer:
     if (@paikat == 0) {
         for my $p ($q->param) {
-            push @paikat, $q->param($p) if ($p =~ /^paikka/)
+            push @paikat, $q->multi_param($p) if ($p =~ /^paikka/)
         }
     }
     (@suureet != 0 and @paikat != 0) or croak("Required param 'paikka' or 'suure' missing.");
@@ -290,9 +279,7 @@ sub get_dataset {
     $from = defined $from ? "and aika>='$from'" : '';
     $to = defined $to ? "and aika<='$to'" : '';
 
-    #print STDERR "suure=$suure, paikka=[@paikat]\n";
-
-    my %liput = (1 => 'Outlier', 3 => 'Mittausvirhe');
+    print STDERR "suureet=@suureet, paikat=@paikat\n" if $debug;
 
     my $paikka_sql = '';
     for my $p (@paikat) {
@@ -329,69 +316,64 @@ sub get_dataset {
         $suureet{$suure}{visualisointi} = $visualisointi;
     }
 
-    
-
-    my $table = $raw ? 'data' : 'data_tarkistettu';
-    $sql = 
-	"select paikka,suure,aika,arvo,lippu from $table where ".
-	"($paikka_sql) and ($suure_sql) $from $to";
-    #$sql .= " limit $limit" if $limit;
+    $sql = "select paikka,suure,aika,arvo,lippu from data where ".
+	"($paikka_sql) and ($suure_sql) $from $to and lippu % 10 = 0";
+    print STDERR $sql,"\n" if $debug;
     $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     $rv = $sth->execute or croak($dbh->errstr);
-    %ajat = ();
+    my %data_tmp;
+    while (1) {
+        my ($paikka,$suure,$aika,$arvo,$lippu) = $sth->fetchrow_array;
+        last unless $paikka;
+        $arvo = 'null' unless defined $arvo;
+        my ($day, $time) = split / /, $aika;
+	$data_tmp{$paikka}{$suure}{$day}{$lippu}{$time} = $arvo;
+    }
+
     my %data;
-    my %flags;
-    my %paikat;
-    my %have_data_from_day;
-    my %have_data;
-    while (1) {
-	my($paikka,$suure,$aika,$arvo,$lippu) = $sth->fetchrow_array;
-	last unless $paikka;
-        $arvo = 'null' unless defined $arvo;
-	$paikat{$paikka} = 1;
-        my($yr,$mo,$day,$hr,$min,$sec) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
+    my %ajat;
+    for my $paikka (keys %data_tmp) {
+        for my $suure (keys %{$data_tmp{$paikka}}) {
+            for my $day (keys %{$data_tmp{$paikka}{$suure}}) {
+                my $lippu;
 
-        # if hr:min:sec == 00:00:00, the time is not set, set it to noon 12:00:00
-        if ($hr eq '00' and $min eq '00' and $sec eq '00') {
-            $hr = 12;
-            $aika = "$yr-$mo-$day $hr:$min:$sec";
+                # daily data overrides non-daily data from the same date
+                #if (exists $data_tmp{$paikka}{$suure}{$day}{10}) {
+                #    $lippu = 10;
+                #} else {
+                #    $lippu = 0;
+                #}
+
+                # non-daily data overrides daily data from the same date
+                if (exists $data_tmp{$paikka}{$suure}{$day}{0}) {
+                    $lippu = 0;
+                } else {
+                    $lippu = 10;
+                }
+
+                my($year,$mon,$mday) = $day =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/;
+                for my $time (keys %{$data_tmp{$paikka}{$suure}{$day}{$lippu}}) {
+                    my($hour,$min,$sec) = $time =~ /^(\d\d):(\d\d):(\d\d)/;
+                    # for JavaScript we need the time as milliseconds since 1970/01/01 UTC (the epoch)
+                    # our time is implicitly in Europe/Helsinki TZ
+                    my $dt = DateTime->new(
+                        year => $year,
+                        month => $mon,
+                        day => $mday,
+                        hour => $hour,
+                        minute => $min,
+                        second => $sec,
+                        time_zone => 'Europe/Helsinki'
+                        );
+                    my $time2 = $dt->epoch; # in seconds
+                    $ajat{$time2} = $dt;
+                    $data{$paikka}{$suure}{$time2} = $data_tmp{$paikka}{$suure}{$day}{$lippu}{$time};
+                }
+            }
         }
-
-        my $x = $data{$aika};
-	$data{$aika}{$paikka}{$suure} = $arvo;
-        $have_data_from_day{"$yr-$mo-$day"}{$paikka}{$suure} = 1;
-        $flags{$aika}{$paikka}{$suure} = $lippu;
-        $have_data{$paikka}{$suure} = 1;
-	next if $x;
-        $mo--;
-	$ajat{$aika} = [$yr,$mo,$day,$hr,$min,$sec];
     }
-    # insert daily data for those days from which there is no "continuous" data
-    $table = $raw ? 'data_daily' : 'data_daily_tarkistettu';
-    $sql = 
-	"select paikka,suure,aika,arvo,lippu from $table where ".
-	"($paikka_sql) and ($suure_sql) $from $to";
-    #$sql .= " limit $limit" if $limit;
-    $sth = $dbh->prepare($sql) or croak($dbh->errstr);
-    $rv = $sth->execute or croak($dbh->errstr);
-    while (1) {
-	my($paikka,$suure,$aika,$arvo,$lippu) = $sth->fetchrow_array;
-	last unless $paikka;
-        $arvo = 'null' unless defined $arvo;
-	$paikat{$paikka} = 1;
-        my($yr,$mo,$day) = $aika =~ /^(\d\d\d\d)-(\d\d)-(\d\d)/;
-        # is there data from this place on this day already?
-        next if $have_data_from_day{$aika}{$paikka}{$suure};
-	my $x = $data{$aika};
-	$data{$aika}{$paikka}{$suure} = $arvo;
-        $flags{$aika}{$paikka}{$suure} = $lippu;
-        $have_data{$paikka}{$suure} = 1;
-	next if $x;
-        # set it to the noon
-        $mo--;
-	$ajat{$aika} = [$yr,$mo,$day,12,0,0];
-    }
-    my @aika = sort cmp_dates keys %ajat;
+    my @ajat = sort keys %ajat;
+    print STDERR "$ajat{$ajat[0]} .. $ajat{$ajat[$#ajat]}\n" if $debug;
     
     print "[\n";
     
@@ -408,8 +390,8 @@ sub get_dataset {
             last unless $selite;
             $first = 0;
             my %ra = ( label => $selite, yaxis => $yaxis );
-            my $time0 = timelocal(@{$ajat{$aika[0]}}[5,4,3,2,1,0])*1000;
-            my $time1 = timelocal(@{$ajat{$aika[$#aika]}}[5,4,3,2,1,0])*1000;
+            my $time0 = $ajat[0]*1000;
+            my $time1 = $ajat[$#ajat]*1000;
             $ra{data} = [[$time0, $arvo], [$time1, $arvo]];
             my $json = JSON->new;
             print $json->encode(\%ra);
@@ -419,7 +401,7 @@ sub get_dataset {
     for my $suure (@suureet) {
         my $inc_axis = 0;
         for my $paikka (@paikat) {
-            next unless $have_data{$paikka}{$suure};
+            next unless exists $data{$paikka}{$suure};
             print ",\n" unless $first;
             $first = 0;
             $inc_axis = 1;
@@ -427,26 +409,28 @@ sub get_dataset {
             print "\"yaxis\": $yaxis,\n";
             print "\"data\": [\n";
             my $first2 = 1;
-            for my $aika (@aika) {
-                next unless $data{$aika}{$paikka}{$suure};
+            for my $aika (@ajat) {
+                my $arvo = $data{$paikka}{$suure}{$aika};
+                next unless defined $arvo;
                 print ",\n" unless $first2;
                 $first2 = 0;
-                if ($data{$aika}{$paikka}{$suure} eq 'null') {
+                if ($arvo eq 'null') {
                     print 'null';
                 } elsif ($timefmt eq 'fi') { # 'D.M.Y H:M:S') {
-                    my $time = "\"".($ajat{$aika}[2]+0).".".($ajat{$aika}[1]+1).".$ajat{$aika}[0]".
-                        " $ajat{$aika}[3]:$ajat{$aika}[4]:$ajat{$aika}[5]\"";
-                    print "[",$time,",$data{$aika}{$paikka}{$suure}]";
+                    my $dt = $ajat{$aika};
+                    my $year = $dt->year;
+                    my $mon = $dt->month;
+                    my $day = $dt->day;
+                    my $hour = $dt->hour;
+                    my $min = $dt->minute;
+                    my $sec = $dt->second;
+                    for ($mon, $day, $hour, $min, $sec) {
+                        $_ = '0'.$_ if $_ < 10;
+                    }
+                    $aika = '"'."$year.$mon.$day $hour:$min:$sec".'"';
+                    print "[",$aika,",$arvo]";
                 } else {
-                    # time is needed in JavaScript timestamps, which is milliseconds since 1970/01/01 UTC
-                    # our data is in timezoneless timestamp (implicitly in Europe/Helsinki TZ)
-                    # this server is in Finland, thus timelocal should work
-                    # but this is not a generic solution!
-                    my $time = timelocal(@{$ajat{$aika}}[5,4,3,2,1,0]);
-                    #my $time = Delta_Days(1970, 1, 1, @{$ajat{$aika}}[0,1,2]); # days
-                    #$time *= 60 * 60 * 24;
-                    #$time += $a[3]*60*60 + $a[4]*60 + $a[5];
-                    print "[",$time*1000,",$data{$aika}{$paikka}{$suure}]";
+                    print "[",$aika*1000,",$arvo]";
                 }
             }
             print "],\"$suureet{$suure}{visualisointi}\": { \"show\": true }";
@@ -458,15 +442,6 @@ sub get_dataset {
 }
 
 sub cmp_dates {
-    # [yr,mon,day,hr,min,sec] []
-    for my $i (0..5) {
-        return -1 if $ajat{$a}->[$i] < $ajat{$b}->[$i];
-        return 1 if $ajat{$a}->[$i] > $ajat{$b}->[$i];
-    }
-    return 0;
-}
-
-sub cmp_dates2 {
     my($a,$b) = @_;
     for my $i (0..$#$a) {
         return -1 if $a->[$i] < $b->[$i];
