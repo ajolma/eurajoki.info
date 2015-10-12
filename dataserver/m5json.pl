@@ -140,8 +140,7 @@ sub get_datasets {
 
     my %variables;
     for my $code (keys %codes) {
-        my $table = 'data';
-        $sql = "select distinct suure from $table where paikka='$code' order by suure";
+        $sql = "select distinct suure from data where paikka='$code' and lippu % 10 = 0 order by suure";
         push @sql,$sql;
         $sth = $dbh->prepare($sql) or croak($dbh->errstr);
         $rv = $sth->execute or croak($dbh->errstr);
@@ -151,7 +150,7 @@ sub get_datasets {
             push @vars, $var;
         }
         for my $var (@vars) {
-            $sql = "select aika from $table where paikka='$code' and suure='$var'".
+            $sql = "select aika from data where paikka='$code' and lippu % 10 = 0 and suure='$var'".
                 " order by aika asc limit 1";
             push @sql,$sql;
             $sth = $dbh->prepare($sql) or croak($dbh->errstr);
@@ -170,7 +169,7 @@ sub get_datasets {
                 $variables{$code}{$var}{begin} = $time;
             }
 
-            $sql = "select aika from $table where paikka='$code' and suure='$var'".
+            $sql = "select aika from data where paikka='$code' and lippu % 10 = 0 and suure='$var'".
                 " order by aika desc limit 1";
             push @sql,$sql;
             $sth = $dbh->prepare($sql) or croak($dbh->errstr);
