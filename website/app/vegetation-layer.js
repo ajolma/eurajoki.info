@@ -38,7 +38,7 @@ function create_vegetation_layer(options) {
             version: "1.1.0",
             srsName: "EPSG:3857",
             url: config.url.joki,
-            featureType: config.prefix.joki+".jokipalat.geom",
+            featureType: config.prefix.joki+".joki.geom",
             outputFormat: "GML2"
         }),
         visibility: options.visibility,
@@ -52,32 +52,67 @@ function create_vegetation_layer(options) {
         var body = '<div style="">Kasvillisuus: ';
         var plants = plants_on_river_elements[fid];
         var f = true;
-        for (plant in plants) {
-            if (f)
-                f = false;
-            else
-                body += ', ';
-            var kasvi = $("li[id="+plant+"]").html();
-            var hakusana = $("li[id="+plant+"]").attr('hakusana');
+        var sortable = [];
+        for (id in plants) {
+            var ref = $("li[id="+id+"]");
+            var nimi = ref.html();
+            var hakusana = ref.attr('hakusana');
+            sortable.push({id:id, nimi:nimi, hakusana:hakusana});
+        }
+        sortable.sort(function(a, b) {
+            return a.nimi.localeCompare(b.nimi);
+        });
+        $(sortable).each(function(i,plant) {
+            var kasvi = plant.nimi;
             if (options.interactive) {
                 var href = "http://fi.wikipedia.org/wiki/";
-                var tag = 'wikipedia_vegetation';
-                var a0 = ' class="'+tag+' cboxElement"';
-                a0 += ' style="color:#0000ff; cursor:pointer"';
-                a0 += ' data-cbox-width="75%"';
-                a0 += ' data-cbox-height="75%"';
-                var on_open = ' onclick="$.colorbox({';
-                var on_close = '});"';
-                var json_href = "href:'"+href;
-                var json = ', iframe:true, opacity:0.6';
-                json += ", width:'75%', height:'75%'";
-                kasvi = "<span"+a0+"'"+on_open+json_href+hakusana+"'"+json+on_close+">"+kasvi+"</span>";
+                //var href = "http://www.luontoportti.com/suomi/?q="; # not allowed
+                var attrs = {
+                    'class': "wikipedia_vegetation cboxElement",
+                    'style': "color:#0000ff; cursor:pointer",
+                    'data-cbox-width': "75%",
+                    'data-cbox-height': "75%",
+                    'onclick': "$.colorbox(" + json({
+                        href: href + plant.hakusana, 
+                        iframe: true, 
+                        opacity: 0.6, 
+                        width: '75%', 
+                        height: '75%'
+                    }) + ");"
+                };
+                kasvi = element('span', attrs, plant.nimi);
             }
+            if (f) f = false; else body += ', ';
             body += kasvi;
-        }
+        });
         body += "</div>";
         return {title:"Jokiosuus "+fid, body:body};
-    };
+    }
+
+    function json(obj) {
+        var a = '{';
+        var s = '';
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                var h = '';
+                if (typeof obj[key] === 'string')
+                    h = "'";
+                a += s + key + ":" + h + obj[key] + h;
+                if (s === '') s = ', ';
+            }
+        }
+        return a+'}';
+    }
+
+    function element(tag, attrs, text) {
+        var a = '';
+        for (var key in attrs) {
+            if (attrs.hasOwnProperty(key)) {
+                a += ' ' + key + '="' + attrs[key] + '"';
+            }
+        }
+        return '<'+tag+a+'>'+text+'</'+tag+'>';
+    }
 
     vegetation_layer.events.on({
         featureselected: function(obj) {

@@ -34,8 +34,14 @@ function init() {
 }
 
 function onPlantsReceived(param) {
-    $.each(param, function(i, name) {
-        var html = '<li class="ui-state-default" id="'+i+'" hakusana="'+name[1]+'">'+name[0]+'</li>';
+    var sortable = [];
+    for (var id in param)
+        sortable.push([id, param[id]])
+    sortable.sort(function(a, b) {
+        return a[1][0].localeCompare(b[1][0]);
+    });
+    $(sortable).each(function(i,plant) {
+        var html = '<li class="ui-state-default" id="'+plant[0]+'" hakusana="'+plant[1][1]+'">'+plant[1][0]+'</li>';
         $("#selectable").append(html);
     });
 }
@@ -85,6 +91,7 @@ $(function() {
 
     $( "#dialog" ).dialog({
         autoOpen: false,
+        width: 'auto',
         closeText: "Sulje"
     });
 
