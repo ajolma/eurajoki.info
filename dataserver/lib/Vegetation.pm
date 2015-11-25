@@ -1,3 +1,7 @@
+# This file is part of eurajoki.info
+# https://github.com/ajolma/eurajoki.info
+# Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2
+
 package Vegetation;
 use strict;
 use warnings;

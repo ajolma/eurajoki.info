@@ -1,3 +1,7 @@
+# This file is part of eurajoki.info
+# https://github.com/ajolma/eurajoki.info
+# Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2
+
 package Util;
 use strict;
 use warnings;
@@ -6,7 +10,7 @@ use Exporter 'import';
 use Encode qw(decode encode);
 use JSON;
 
-our @EXPORT = qw(load_config common_responses connect_params html200 cmp_dates json200);
+our @EXPORT = qw(load_config common_responses connect_params html200 cmp_dates json200 option_list);
 
 sub load_config {
     my $self = shift;
@@ -64,6 +68,19 @@ sub cmp_dates {
         return 1 if $a->[$i] > $b->[$i];
     }
     return 0;
+}
+
+sub option_list {
+    my ($default, $values, $labels) = @_;
+    my @list = ();
+    for my $value (@$values) {
+        my $label = $value;
+        $label = $labels->{$value} if defined $labels->{$value};
+        my $attr = {value => $value};
+        $attr->{selected} = 'selected' if $default && $value eq $default;
+        push @list, [option => $attr, $label];
+    }
+    return \@list;
 }
 
 {

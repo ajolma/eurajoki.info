@@ -1,15 +1,14 @@
-package TimeSeriesManager;
+# This file is part of eurajoki.info
+# https://github.com/ajolma/eurajoki.info
+# Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2
 
+package TimeSeriesManager;
+use strict;
+use warnings;
 use 5.010000; # say // and //=
 use Carp;
-use Modern::Perl;
-use Encode qw(decode encode);
-use Plack::Request;
-use Plack::Builder;
-use JSON;
-use XML::LibXML;
-use Clone 'clone';
-use XML::LibXML::PrettyPrint;
+use Util;
+use Date::Calc qw/check_date/;
 
 use parent qw/Plack::Component/;
 
@@ -18,91 +17,33 @@ binmode STDERR, ":utf8";
 sub new {
     my ($class, $parameters) = @_;
     my $self = Plack::Component->new($parameters);
-    if (not ref $self->{config}) {
-        open my $fh, '<', $self->{config} or croak "Can't open file '$self->{config}': $!\n";
-        my @json = <$fh>;
-        close $fh;
-        $self->{config} = decode_json "@json";
-        $self->{config}{debug} = 0 unless defined $self->{config}{debug};
-    }
+    load_config($self) if not ref $self->{config};
     croak "A configuration file is needed." unless $self->{config};
     return bless $self, $class;
 }
 
 sub call {
     my ($self, $env) = @_;
-    if (! $env->{'psgi.streaming'}) { # after Lyra-Core/lib/Lyra/Trait/Async/PsgiApp.pm
-        return [ 500, ["Content-Type" => "text/plain"], ["Internal Server Error (Server Implementation Mismatch)"] ];
-    }
-    return [ 200, 
-               ['Content-Type' => 'text/html'], 
-               ['No Not implemented yet.'] 
-          ];
-}
+    my $ret = common_responses($env);
+    return $ret if $ret;
 
-1;
+    my $request = Plack::Request->new($env);
+    my $parameters = $request->parameters;
 
-__DATA__
+    my ($connect, $user, $pass) = connect_params($self);
+    my $dbh = DBI->connect($connect, $user, $pass) or croak('no db');
 
-#!/opt/perl/current/bin/perl -w
+    my $cmd = $parameters->{cmd} // '';
+    $self->{paikka} = $parameters->{Paikka} // '';
+    $self->{suure} = $parameters->{Suure} // '';
+    $self->{test} = $parameters->{Test} // '';
+    $self->{data} = $parameters->{Data} // '';
+    
+    $self->{timestep} = $parameters->{Aika_askel} // '';
+    $self->{compute} = $parameters->{Compute} // '';
+    $self->{amount} = $parameters->{Amount} // '';
 
-# This file is part of eurajoki.info
-# https://github.com/ajolma/eurajoki.info
-# Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2
-
-use utf8;
-use strict;
-use IO::Handle;
-use Carp;
-use Encode;
-use DBI;
-use CGI;
-use JSON;
-use Date::Calc qw/check_date/;
-use Statistics::Descriptive;
-
-binmode(STDOUT, ":utf8");
-
-my $png = '/var/www/proj/Eurajoki/plot/plot.png';
-
-my $q = CGI->new;
-print $q->header( -type => 'text/html', 
-                  -charset=>'utf-8' );
-
-my $params = $q->Vars;
-
-# no binary file uploads to this script
-for my $key (keys %$params) {
-    utf8::decode($params->{$key});
-}
-
-my $db = `grep local-eurajoki /var/www/etc/dbi`;
-chomp $db;
-my(undef, $connect, $user, $pass) = split /\s+/, $db;
-my $dbh = DBI->connect($connect, $user, $pass, {pg_enable_utf8 => 1}) or error('no db');
-page();
-
-sub error {
-    my $error = shift;
-    print '<br /><font color="red">',$error,'</font>',$q->end_html;
-    exit;
-}
-
-sub mywarn {
-    my ($error) = @_;
-    print '<font color="red">',$error,'</font><br />';
-    return 1;
-}
-
-sub page {
-    my $cmd = $params->{cmd} || '';
-    my $paikka = $params->{Paikka} || '';
-    my $suure = $params->{Suure} || '';
-
-    for my $key (sort keys %$params) {
-        my @foo = split("\0",$params->{$key});
-        #print "$key: @foo<br />\n";
-    }
+    $self->{style} = $parameters->{Style} // 'points';
 
     my $sql = 
         "select distinct paikka,nimike,suureet.suure,suureet.nimi ".
@@ -131,22 +72,29 @@ sub page {
         }
     }
     my @suureet = @{$paikka2suure{$paikat[0]}};
+
+    $self->{a_paikat} = \@paikat;
+    $self->{a_suureet} = \@suureet;
+    $self->{h_paikat} = \%paikat;
+    $self->{h_suureet} = \%suureet;
+
     my $json = JSON->new;
+    $json->utf8;
     $json = $json->encode(\%json);
 
-    print $q->start_html('Eurajoen data');
+    my @body = ([ h2 => 'Aikasarjaeditori' ]);
 
     if ($cmd eq '' or $cmd eq 'Hae' or $cmd eq 'Palaa tallentamatta') {
         
-        HaeForm($json, \@paikat, \@suureet, \%paikat, \%suureet);
+        push @body, $self->HaeForm($json);
         if ($cmd eq 'Hae') {
-            Hae('show');
+            push @body, $self->Hae($dbh, 'show');
         }
     }
 
     elsif ($cmd eq 'Siirry tallentamaan') {
 
-        TallennaForm($paikka, $suure, \%paikat, \%suureet);
+        push @body, $self->TallennaForm();
         
     } 
 
@@ -154,161 +102,46 @@ sub page {
 
         my $test = $cmd eq 'Testaa tallennusta';
 
-        if ($params->{Data}) {
-            Tallenna($test ? 'test' : '', $paikka, $suure, $json, \@paikat, \@suureet, \%paikat, \%suureet);
+        if ($self->{data} ne '') {
+            push @body, $self->Tallenna($dbh, $test ? 'test' : '', $json);
         } else {
-            Hae('store') unless $params->{Test};
+            push @body, $self->Hae($dbh, 'store') unless $self->{test};
         }
 
     }
 
     if ($cmd eq '' or $cmd eq 'Hae') {
-        lastScript($suure);
+        push @body, $self->lastScript();
     }
 
-    print $q->end_html;
-}
-
-sub lastScript {
-    my ($suure) = @_;
-    print "<script>(function(){setSuure(\"$suure\")})();</script>";
+    my $html = HTML->new;
+    $html->element(html => [[head => [[meta => {'http-equiv' => 'Content-Type',
+                                                content => 'text/html; charset=UTF-8'}],
+                                      [title => 'Aikasarjaeditori']]],
+                            [body => \@body]]);
+    return html200($html->html);
 }
 
 sub HaeForm {
-    my ($json, $a_paikat, $a_suureet, $h_paikat, $h_suureet) = @_;
-    print 
-        "<style>img {float: right}</style>\n",
-        "<script>var ab = ",$json,";</script>\n",
-        '<script type="text/javascript" src="data.js"></script>',"\n",
-        $q->start_form,
-        $q->popup_menu( -id => 'Paikka',
-                        -name => 'Paikka',
-                        -values => $a_paikat,
-                        -labels => $h_paikat,
-                        -onChange => 'uusiPaikka()' ),' ',
-        $q->popup_menu( -name => 'Suure',
-                        -id => 'Suure',
-                        -values => $a_suureet,
-                        -labels => $h_suureet,
-                        -onChange => 'pyyhiKuva()'),' ',
-        $q->popup_menu( -name => 'Amount',
-                        -values => ['10 viimeisintä', '100 viimeisintä', 'Kaikki'],
-                        -onChange => 'pyyhiKuva()'),' ',
-        $q->popup_menu( -name => 'Style',
-                        -values => ['points', 'lines'],
-                        -labels => {points => 'Esitä pisteillä', lines => 'Esitä viivoilla'},
-                        -onChange => 'pyyhiKuva()'),' ',
-        $q->submit('cmd','Hae'),' ',
-        $q->submit('cmd','Siirry tallentamaan'),
-        $q->end_form;
-}
-
-sub TallennaForm {
-    my ($paikka, $suure, $paikat, $suureet) = @_;
-    print 
-        $q->start_form,
-        $q->hidden( -name => 'Paikka',
-                    -value => $paikka ),
-        $q->hidden( -name => 'Suure',
-                    -value => $suure ),
-        '<p>',
-        "Tallennetaan paikasta <b>$paikat->{$paikka}</b> dataa <b>$suureet->{$suure}</b>  ",
-        $q->submit('cmd','Palaa tallentamatta'),
-        '<p/><p>',
-        "<p>Anna data yksi arvo rivillä, järjestyksessä päivämäärä [kellonaika] arvo [lippu].",
-        " Älä anna kellonaikaa jos havaintoarvo on päiväkohtainen.",
-        " Lippua ei yleensä tarvitse antaa. Lipulla ilmaistaan yleensä havainnon päiväkohtaisuutta.",
-        " Lipun muoto on ln, jossa n on lippunumero (ks. tietokanta).",
-        " Päivämäärä voi olla esim. muodossa pp.kk.vvvv ja ja kellonaika esim. muodossa hh:mm.</p>",
-        " <p>Anna arvoksi 'x', jos tieto puuttuu, ja 'poista', jos haluat poistaa arvon tietokannasta.",
-        " Jos haluat muuttaa tiedon, anna uusi tieto.",
-        " Arvon desimaalipilkku muutetaan desimaalipisteeksi eli älä anna pilkkua tuhaterottimena.",
-        " Jos kaikkia rivejä ei onnistuta tulkitsemaan tai tallennusta vain testataan,",
-        " mitään tietoa ei tallenneta. Ohjelma ilmoittaa tulkintaongelmista ja virheistä.</p>",
-        '<p/>',
-        '<pre>päivämäärä [kellonaika] mittausarvo [lippu]</pre>',
-        $q->textarea( -name => 'Data',
-                      -rows => 40,
-                      -columns => 60 ),
-        '<br />',
-        $q->submit('cmd','Tallenna'),
-        $q->submit('cmd','Testaa tallennusta'),
-        $q->end_form;
-}
-
-sub Tallenna {
-    my ($opt, $paikka, $suure, $json, $a_paikat, $a_suureet, $h_paikat, $h_suureet) = @_;
-
-    my @data = split(/\n/,$params->{Data});
-
-    my $sql = "select aika,arvo,lippu from data ".
-        "where paikka='$paikka' and suure='$params->{Suure}'";
-    my $sth = $dbh->prepare($sql) or error($dbh->errstr);
-    my $rv = $sth->execute or error($dbh->errstr);
-    my %data;
-    while (my($aika,$arvo,$lippu) = $sth->fetchrow_array) {
-        $data{"$aika $lippu"} = $arvo;
-    }
-    
-    $sql = "begin;\n";
-    my $i = 1;
-    my $warn;
-    for my $data (@data) {
-        my($aika,$arvo,$lippu,$w) = tulkitse_rivi($i, $data);
-        $warn = 1 if $w;
-        $i++;
-        unless ($w) {
-            if ($arvo eq 'delete') {
-                if (exists $data{"$aika $lippu"}) {
-                    $sql .= "delete from data ".
-                        "where aika='$aika' and paikka='$paikka' and suure='$suure' and lippu=$lippu;\n";
-                } else {
-                    $warn = mywarn("Ajanhetkeltä '$aika' ei ole mittausarvoa, jonka voisi poistaa.");
-                }
-            } elsif (exists $data{"$aika $lippu"}) {
-                $sql .= "update data set arvo=$arvo,lippu=$lippu ".
-                    "where aika='$aika' and paikka='$paikka' and suure='$suure';\n";
-            } else {
-                $sql .= "insert into data (paikka,aika,suure,arvo,lippu) values ".
-                    "('$paikka','$aika','$suure',$arvo,$lippu);\n";
-            }
-        }
-    }
-    $sql .= 'commit;';
-    print "Virheitä ei havaittu.<br />" unless $warn;
-    print "SQL:ssä mahdollisesti olevat virheet näkyvät vasta tallennettaessa.<br />" if $opt eq 'test';
-    print "<br />Tallennus-SQL on:<pre><code>$sql</pre></code>\n";
-    my $ok;
-    if (!$warn && $opt ne 'test') {
-        $ok = $dbh->do($sql);
-        if ($ok) {
-            print '<p><b>Tallennus OK</b></p>';
-            HaeForm($json, $a_paikat, $a_suureet, $h_paikat, $h_suureet);
-            lastScript($suure);
-        } else {
-            mywarn($dbh->errstr);
-        }
-    } else {
-        if ($warn) {
-            mywarn("Tallennusta ei tehty koska ilmeni virheitä tai varoituksia.");
-        } else {
-            print "Tallennusta ei tehty.<br />";
-        }
-    }
-
-    TallennaForm($paikka, $suure, $h_paikat, $h_suureet) unless $ok;
-
+    my ($self, $json) = @_;
+    return ([ style => "img {float: right}" ],
+            [ script => "var ab = $json;" ],
+            [ script => {type => "text/javascript", src => "/lib/data.js"}, ''],
+            [ form => 
+              [[ select => {id => 'Paikka', name => 'Paikka', onChange => 'uusiPaikka()'}, 
+                 option_list($self->{paikka}, $self->{a_paikat}, $self->{h_paikat})],
+               [ select => {id => 'Suure', name => 'Suure', onChange => 'pyyhiKuva()'}, 
+                 option_list($self->{suure}, $self->{a_suureet}, $self->{h_suureet})],
+               [ select => {id => 'Amount', name => 'Amount', onChange => 'pyyhiKuva()'}, 
+                 option_list($self->{amount}, ['10 viimeisintä', '100 viimeisintä', 'Kaikki'])],
+               [ select => {id => 'Style', name => 'Style', onChange => 'pyyhiKuva()'}, 
+                 option_list($self->{style}, ['points', 'lines'], {points => 'Esitä pisteillä', lines => 'Esitä viivoilla'})],
+               [ input => {type=>'submit', name => 'cmd', value=>'Hae'}],
+               [ input => {type=>'submit', name => 'cmd', value=>'Siirry tallentamaan'}]] ]);
 }
 
 sub Hae {
-    my $cmd = shift;
-
-    my $paikka = $params->{Paikka} || '';
-    my $suure = $params->{Suure} || '';
-    my $timestep = $params->{Aika_askel} || '';
-    my $compute = $params->{Compute} || '';
-    my $amount = $params->{Amount} || '';
-    my $style = $params->{Style} || 'points';
+    my ($self, $dbh, $cmd) = @_;
     
     my $sql = "select lippu,kuvaus from liput";
     my $sth = $dbh->prepare($sql) or error($dbh->errstr);
@@ -319,16 +152,16 @@ sub Hae {
     }
     
     my $limit = '';
-    if ($amount ne 'Kaikki') {
-        ($limit) = $amount =~ /(\d+)/;
+    if ($self->{amount} ne 'Kaikki') {
+        ($limit) = $self->{amount} =~ /(\d+)/;
         $limit = "limit $limit";
     }
     my $clean = '';
-    if ($compute eq 'Puhtaat arvot') {
+    if ($self->{compute} eq 'Puhtaat arvot') {
         $clean = 'and lippu % 10 == 0';
     }
     $sql = "select aika,arvo,lippu from data ".
-        "where paikka='$paikka' and suure='$params->{Suure}' $clean ".
+        "where paikka='$self->{paikka}' and suure='$self->{suure}' $clean ".
         "order by aika desc $limit";
     $sth = $dbh->prepare($sql) or error($dbh->errstr);
     $rv = $sth->execute or error($dbh->errstr);
@@ -347,19 +180,17 @@ sub Hae {
     my $commit = "begin;\n";
     my %data;
 
-    my @html;
+    my @trs;
     my @data;
     for (@input) {
         my($aika,$arvo,$lippu) = @$_;
-        
         $lippu = $liput{$lippu} if $lippu ne '';
         push @data, [$aika,$arvo];
         $arvo = 'Tieto puuttuu' if $arvo eq '';
-        push @html, "<tr><td>$aika</td><td>$arvo</td><td>$lippu</td></tr>\n";
- 
+        push @trs, [tr => [[td => $aika],[td => $arvo],[td => $lippu]]];
     }
        
-    print "\n<p id=\"info\">";
+    my @ret;
     if (@data and $cmd ne 'store') {
         open DATA, ">/tmp/data";
         for my $d (@data) {
@@ -368,7 +199,7 @@ sub Hae {
         close DATA;
         open GNUPLOT, ">/tmp/gnuplot";
         print GNUPLOT "set terminal png size 800,400\n";
-        print GNUPLOT "set output \"$png\"\n";
+        print GNUPLOT "set output \"$self->{config}{images}/plot.png\"\n";
         my $timefmt = '"%Y-%m-%d %H:%M:%S"';
         my $ydata = 3;
         print GNUPLOT "set timefmt $timefmt\n";
@@ -376,27 +207,141 @@ sub Hae {
         print GNUPLOT "plot \"/tmp/data\" using 1:$ydata with lines title \"\"\n";
         close GNUPLOT;
         system "cat /tmp/gnuplot | gnuplot";
-        print "<img src='/Eurajoki/plot/plot.png' />\n";
-        print "<table id =\"info2\" border='1'>\n";
-        print @html;
-        print "</table>\n";
+        push @ret, [ img => {src=>'/Eurajoki/images/plot.png'} ];
+        push @ret, [ table => {id => "info2", border=>1}, \@trs ];
     }
     if (@data == 0) {
-        print "<p><font color=\"red\">Ei dataa. ($sql)</font></p>";
+        push @ret, [ p => [font => {color=>"red"}, "Ei dataa. ($sql)"]];
     }
-    print "</p>";
+
+    return [ p => {id => 'info'}, \@ret ];
 }
+
+sub TallennaForm {
+    my ($self) = @_;
+    ([p => 
+      [
+       [1 => "Tallennetaan paikasta "],
+       [b => $self->{h_paikat}->{$self->{paikka}}],
+       [1 => " dataa "],
+       [b => $self->{h_suureet}->{$self->{suure}}],
+       [1 => "  "]]
+     ],
+     [form => {method => 'post'},
+      [
+       [input => {type=>'hidden', name=>'Paikka', value=>$self->{paikka}}],
+       [input => {type=>'hidden', name=>'Suure', value=>$self->{suure}}],
+       [input => {type=>'hidden', name=>'Amount', value=>$self->{amount}}],
+       [input => {type=>'submit', name=>'cmd', value=>'Palaa tallentamatta'}],
+       [p => 
+        "Anna data yksi arvo rivillä, järjestyksessä päivämäärä [kellonaika] arvo [lippu].".
+        " Älä anna kellonaikaa jos havaintoarvo on päiväkohtainen.".
+        " Lippua ei yleensä tarvitse antaa. Lipulla ilmaistaan yleensä havainnon päiväkohtaisuutta.".
+        " Lipun muoto on ln, jossa n on lippunumero (ks. tietokanta).".
+        " Päivämäärä voi olla esim. muodossa pp.kk.vvvv ja ja kellonaika esim. muodossa hh:mm."],
+       [p => 
+        "Anna arvoksi 'x', jos tieto puuttuu, ja 'poista', jos haluat poistaa arvon tietokannasta.".
+        " Jos haluat muuttaa tiedon, anna uusi tieto.".
+        " Arvon desimaalipilkku muutetaan desimaalipisteeksi eli älä anna pilkkua tuhaterottimena.".
+        " Jos kaikkia rivejä ei onnistuta tulkitsemaan tai tallennusta vain testataan,".
+        " mitään tietoa ei tallenneta. Ohjelma ilmoittaa tulkintaongelmista ja virheistä."],
+       [pre => 'päivämäärä [kellonaika] mittausarvo [lippu]'],
+       [textarea => {rows=>40, cols=>60, name=>'Data'}, $self->{data}],
+       ['br'],
+       [input => {type=>'submit', name=>'cmd', value=>'Tallenna'}],
+       [input => {type=>'submit', name=>'cmd', value=>'Testaa tallennusta'}]]
+     ]
+    );
+}
+
+sub Tallenna {
+    my ($self, $dbh, $opt, $json) = @_;
+
+    my @data = split(/\n/,$self->{data});
+
+    my $sql = "select aika,arvo,lippu from data ".
+        "where paikka='$self->{paikka}' and suure='$self->{suure}'";
+    my $sth = $dbh->prepare($sql) or error($dbh->errstr);
+    my $rv = $sth->execute or error($dbh->errstr);
+    my %data;
+    while (my($aika,$arvo,$lippu) = $sth->fetchrow_array) {
+        $data{"$aika $lippu"} = $arvo;
+    }
+    
+    my @ret;
+    $sql = "begin;\n";
+    my $i = 1;
+    my $warn;
+    for my $data (@data) {
+        say STDERR $data;
+        my($aika,$arvo,$lippu,$w) = tulkitse_rivi($i, $data);
+        say STDERR "$aika,$arvo,$lippu,@$w";
+        if (@$w) {
+            for my $e (@$w) {
+                push @ret, [font => {color=>"red"}, $e."<br />"];
+            }
+            $warn = 1;
+        }
+        $i++;
+        unless (@$w) {
+            if ($arvo eq 'delete') {
+                if (exists $data{"$aika $lippu"}) {
+                    $sql .= "delete from data ".
+                        "where aika='$aika' and paikka='$self->{paikka}' and suure='$self->{suure}' and lippu=$lippu;\n";
+                } else {
+                    push @ret, [font => {color=>"red"}, "Ajanhetkeltä '$aika' ei ole mittausarvoa, jonka voisi poistaa.<br />"];
+                    $warn = 1;
+                }
+            } elsif (exists $data{"$aika $lippu"}) {
+                $sql .= "update data set arvo=$arvo,lippu=$lippu ".
+                    "where aika='$aika' and paikka='$self->{paikka}' and suure='$self->{suure}';\n";
+            } else {
+                $sql .= "insert into data (paikka,aika,suure,arvo,lippu) values ".
+                    "('$self->{paikka}','$aika','$self->{suure}',$arvo,$lippu);\n";
+            }
+        }
+    }
+    $sql .= 'commit;';
+    
+    push @ret, [p => "Virheitä ei havaittu."] unless $warn;
+    push @ret, [p => "SQL:ssä mahdollisesti olevat virheet näkyvät vasta tallennettaessa."] if $opt eq 'test';
+    push @ret, [p => [[1 => "Tallennus-SQL on:"],
+                      [pre => [code => $sql]]]];
+    my $ok;
+    if (!$warn && $opt ne 'test') {
+        $ok = $dbh->do($sql);
+        if ($ok) {
+            push @ret, [p => [b => 'Tallennus OK']];
+            push @ret, $self->HaeForm($json);
+            push @ret, lastScript($self->{suure});
+        } else {
+            push @ret, mywarn($dbh->errstr);
+        }
+    } else {
+        if ($warn) {
+            push @ret, [font => {color=>"red"}, "Tallennusta ei tehty koska ilmeni virheitä tai varoituksia."];
+        } else {
+            push @ret, [p => "Tallennusta ei tehty."];
+        }
+    }
+    
+    push @ret, $self->TallennaForm() unless $ok;
+
+    return @ret;
+}
+
 
 sub tulkitse_rivi { # pvm kellonaika arvo
     my ($rivinro, $rivi) = @_;
     my @elementit = split(/\s+/, $rivi);
     my ($y,$m,$d,$h,$s,$aika,$warn);
+    $warn = [];
     $aika = '';
 
     my $pvm = shift @elementit;
     my $ok = 1;
     if (!$pvm) {
-        $warn = mywarn("Päivämäärä puuttuu");
+        push @$warn, "Päivämäärä puuttuu";
         $ok = 0;
     } elsif ($pvm =~ /^(\d+)\.(\d+)\.(\d\d\d\d)$/) { # dd.mm.yyyy
         $y = $3;
@@ -419,12 +364,14 @@ sub tulkitse_rivi { # pvm kellonaika arvo
         $m = $2;
         $d = $3;
     } else {
-        $warn = mywarn("En pysty tulkitsemaan päivämäärää: '$pvm'");
+        push @$warn, "En pysty tulkitsemaan päivämäärää: '$pvm'";
         $ok = 0;
     }
     if ($ok) {
-        $warn = mywarn("Väärä päiväys: '$pvm'") unless check_date($y,$m,$d);
-        $ok = !$warn;
+        unless (check_date($y,$m,$d)) {
+            push @$warn, "Väärä päiväys: '$pvm'";
+            $ok = 0;
+        }
     }
     if ($ok) {
         $m += 0;
@@ -440,7 +387,7 @@ sub tulkitse_rivi { # pvm kellonaika arvo
         $time = shift @elementit;
         $ok = 1;
         if (!$time) {
-            $warn = mywarn("Kellonaika puuttuu");
+            push @$warn, "Kellonaika puuttuu";
             $ok = 0;
         } elsif ($time =~ /^(\d+)$/) {
             $h = $1;
@@ -455,13 +402,14 @@ sub tulkitse_rivi { # pvm kellonaika arvo
             $m = $2;
             $s = $3;
         } else {
-            $warn = mywarn("En pysty tulkitsemaan kellonaikaa: '$time'");
+            push @$warn, "En pysty tulkitsemaan kellonaikaa: '$time'";
             $ok = 0;
         }
         if ($ok) {
-            $warn = mywarn("Väärä kellonaika: '$time'") unless 
-                ($h <= 24) && ($h >= 0) && ($m <= 60) && ($m >= 0) && ($s <= 60) && ($s >= 0);
-            $ok = !$warn;
+            unless (($h <= 24) && ($h >= 0) && ($m <= 60) && ($m >= 0) && ($s <= 60) && ($s >= 0)) {
+                push @$warn, "Väärä kellonaika: '$time'";
+                $ok = 0;
+            }
         }
         if ($ok) {
             $m = '0'.int($m) if int($m) < 10;
@@ -479,7 +427,7 @@ sub tulkitse_rivi { # pvm kellonaika arvo
     
     my $arvo = shift @elementit;
     if (!(defined $arvo) || $arvo eq '') {
-        $warn = mywarn("Arvo puuttuu");
+        push @$warn, "Arvo puuttuu";
     } elsif ($arvo eq 'x') {
         $arvo = 'NULL';
     } elsif ($arvo eq 'poista') {
@@ -488,7 +436,7 @@ sub tulkitse_rivi { # pvm kellonaika arvo
         $arvo =~ s/,/./;
         $! = 0;
         my ($num, $n) = POSIX::strtod($arvo);
-        $warn = mywarn("'$arvo' ei ole numeerinen: $!") unless ($n == 0) && !$!;
+        push @$warn, "'$arvo' ei ole numeerinen: $!" unless ($n == 0) && !$!;
     }
 
     if (@elementit) {
@@ -496,13 +444,37 @@ sub tulkitse_rivi { # pvm kellonaika arvo
         if ($l =~ /^l(\d+)$/) {
             $lippu = $1;
         } else {
-            $warn = mywarn("En pysty tulkitsemaan lippukoodia: $l");
+            push @$warn, "En pysty tulkitsemaan lippukoodia: $l";
         }
     }
 
     if (@elementit) {
-        $warn = mywarn("Liikaa tietoa rivillä: '@elementit'");
+        push @$warn, "Liikaa tietoa rivillä: '@elementit'";
     }
 
     return ($aika,$arvo,$lippu,$warn);
 }
+
+sub lastScript {
+    my ($self, $suure) = @_;
+    return [script => "(function(){setSuure(\"$self->{suure}\")})();"];
+}
+
+
+1;
+
+__DATA__
+
+
+sub error {
+    my $error = shift;
+    print '<br /><font color="red">',$error,'</font>',$q->end_html;
+    exit;
+}
+
+sub mywarn {
+    my ($error) = @_;
+    print '<font color="red">',$error,'</font><br />';
+    return 1;
+}
+
