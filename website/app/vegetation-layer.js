@@ -89,31 +89,6 @@ function create_vegetation_layer(options) {
         return {title:"Jokiosuus "+fid, body:body};
     }
 
-    function json(obj) {
-        var a = '{';
-        var s = '';
-        for (var key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                var h = '';
-                if (typeof obj[key] === 'string')
-                    h = "'";
-                a += s + key + ":" + h + obj[key] + h;
-                if (s === '') s = ', ';
-            }
-        }
-        return a+'}';
-    }
-
-    function element(tag, attrs, text) {
-        var a = '';
-        for (var key in attrs) {
-            if (attrs.hasOwnProperty(key)) {
-                a += ' ' + key + '="' + attrs[key] + '"';
-            }
-        }
-        return '<'+tag+a+'>'+text+'</'+tag+'>';
-    }
-
     vegetation_layer.events.on({
         featureselected: function(obj) {
             var feature = obj.feature;
