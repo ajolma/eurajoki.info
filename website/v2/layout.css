@@ -1,0 +1,51 @@
+body {
+    margin: 0px;
+}
+
+#id0 {
+    height: 30px;
+    text-align: left;
+    color: #ffffff;
+    font-size: x-large;
+    background-color: #6abf79;
+}
+
+#id1 {
+    float: left;
+    text-align: center;
+}
+
+.id3 {
+    display: block;
+}
+
+.class2 {
+    width: 200px;
+    float: right;
+    //background-color: #aaffaa;
+    //font-family: Helvetica, Arial, Sans-Serif;
+}
+
+.fs1 {
+    //width: 100px;
+    padding: 0px 0px 0px 0px;
+    //display: inline-block;
+}
+
+#layertree ul {
+    list-style: none; /* Remove list bullets */
+    padding: 0px 0px 0px 0px;
+    margin: 0px;
+}
+
+#layertree li > span {
+    cursor: pointer;
+}
+
+input.opacity {
+    display: block;
+}
+
+#info {
+    background-color: #aaffaa;
+}
