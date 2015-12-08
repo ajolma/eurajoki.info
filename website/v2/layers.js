@@ -1,5 +1,10 @@
+var wfs_service = 
+    'http://localhost/Eurajoki/WFS?'+
+    'SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&SRSNAME=EPSG:3067&outputformat=application/json';
+
 var layers = [
-    {title:'Joki',v:'v'},
+    {title:'Joki',v:'ej.joki.geom'},
+    {title:'Mittauspisteet',v:'ej.mittauskohteet2.geom'},
     {title:'Ilmakuvat',ol:'ilmakuvat3067'},
     {title:'Maastovarjostus',ol:'dem'},
     {title:'Peruskartta 1962',ol:'peruskartat_1962_3067'},
@@ -10,6 +15,7 @@ function get_layer(layer) {
         if (layers[i].layer == layer)
             return layers[i];
     }
+    return null;
 }
 
 var layer_objects = [];
@@ -110,37 +116,140 @@ function layer (layer, projection) {
         });
     }
     else if (layer.v) {
-        var vectorSource = new ol.source.Vector({
-            format: new ol.format.GeoJSON(),
-            url: function(extent, resolution, projection) {
-                return 'http://localhost/Eurajoki/WFS?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature'+
-                    '&TYPENAME=ej.joki.geom&SRSNAME=EPSG:3067&outputformat=application/json';
-                //'&bbox=' + extent.join(','); // + ',EPSG:3067';
-            },
-            strategy: ol.loadingstrategy.all
-        });
-        
-        var styleCache = {};
-        
-        layer.layer = new ol.layer.Vector({
-            visible: false,
-            source: vectorSource,
-            style: function(feature, resolution) {
-                var text = resolution < 8 ? feature.get('id') : '';
-                if (!styleCache[text]) {
-                    styleCache[text] = [new ol.style.Style({
+        if (layer.title == 'Joki') {
+            layer.feature_title = function(feature) {
+                return feature.get('id');
+            };
+            layer.info = function(feature) {
+                return 'Jokiosuus ' + feature.get('id') + ': ' 
+                    + ' <div>Vesikasvit: ' + feature.get('vesikasvit') + '</div>'
+                    + ' <div>Rantakasvit: ' + feature.get('rantakasvit') + '</div>'
+                    + ' <div>Puut: ' + feature.get('puut') + '</div>'
+                    + ' <div>Muuta: ' + feature.get('muuta') + '</div>';
+            };
+            layer.highlight = function(feature, text) {
+                return [new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#f00',
+                        width: 1
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255,0,0,1)'
+                    }),
+                    text: new ol.style.Text({
+                        font: '12px Calibri,sans-serif',
+                        text: text,
+                        fill: new ol.style.Fill({
+                            color: '#000'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#f00',
+                            width: 3
+                        })
+                    })
+                })];
+            };
+            layer.normal = function(feature, text) {
+                return [new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#00f',
+                        width: 2
+                    }),
+                    text: new ol.style.Text({
+                        font: '12px Calibri,sans-serif',
+                        text: text,
+                        fill: new ol.style.Fill({
+                            color: '#000'
+                        })
+                    })
+                })]
+            };
+        } else if (layer.title == 'Mittauspisteet') {
+            layer.feature_title = function(feature) {
+                return feature.get('nimike');
+            };
+            layer.info = function(feature) {
+                return 'Mittauspiste ' + feature.get('nimike') + ': ' 
+                    + ' <div>Info: ' + feature.get('info') + '</div>'
+                    + ' <div>Kommentti: ' + feature.get('kommentti') + '</div>'
+                    + ' <div>Lisätieto: ' + feature.get('info2') + '</div>';
+            };
+            layer.highlight = function(feature, text) {
+                return [new ol.style.Style({
+                    image: new ol.style.RegularShape({
+                        fill: new ol.style.Fill({color: 'red'}),
+                        stroke: new ol.style.Stroke({
+                            color: '#f00',
+                            width: 2
+                        }),
+                        points: 5,
+                        radius: 10,
+                        radius2: 4,
+                        angle: 0
+                    }),
+                    text: new ol.style.Text({
+                        font: '12px Calibri,sans-serif',
+                        text: text,
+                        fill: new ol.style.Fill({
+                            color: '#000'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#f00',
+                            width: 3
+                        })
+                    })
+                })];
+            };
+            layer.normal = function(feature, text) {
+                return [new ol.style.Style({
+                    image: new ol.style.RegularShape({
+                        //fill: new ol.style.Fill({color: 'red'}),
                         stroke: new ol.style.Stroke({
                             color: '#00f',
                             width: 2
                         }),
-                        text: new ol.style.Text({
-                            font: '12px Calibri,sans-serif',
-                            text: text,
-                            fill: new ol.style.Fill({
-                                color: '#000'
-                            })
+                        points: 5,
+                        radius: 10,
+                        radius2: 4,
+                        angle: 0
+                    }),
+                    text: new ol.style.Text({
+                        font: '12px Calibri,sans-serif',
+                        text: text,
+                        fill: new ol.style.Fill({
+                            color: '#000'
                         })
-                    })];
+                    })
+                })]
+            };
+        } else {
+            layer.feature_title = function(feature) {
+                return '';
+            };
+            layer.info = function(feature) {
+                return '';
+            };
+            layer.highlight = function(feature, text) {
+                return null;
+            };
+            layer.normal = function(feature, text) {
+                return null;
+            };
+        }
+        var styleCache = {};
+        layer.layer = new ol.layer.Vector({
+            visible: false,
+            source: new ol.source.Vector({
+                format: new ol.format.GeoJSON(),
+                url: function(extent, resolution, projection) {
+                    return wfs_service + '&TYPENAME=' + layer.v;
+                },
+                strategy: ol.loadingstrategy.all
+            }),
+            style: function(feature, resolution) {
+                var text = resolution < 8 ? layer.feature_title(feature) : '';
+                if (!styleCache[text]) {
+                    styleCache[text] = layer.normal(feature, text);
                 }
                 return styleCache[text];
             }
@@ -152,4 +261,21 @@ function layer (layer, projection) {
 function remove_highlighted(layer) {
     if (layer.title == 'Joki')
         displayFeatureInfo(null);
+}
+
+function layer_item(i, name, n) {
+    var up_down = " ";
+    if (i < n) up_down += element('input', {type:"button", value:'&uarr;', onclick:'layer_up('+(n-i)+')'}, '');
+    if (i > 1) up_down += element('input', {type:"button", value:'&darr;', onclick:'layer_down('+(n-i)+')'}, '');
+    var cb = element('input', {id:"visible"+i, class:"visible", type:"checkbox"}, name+up_down);
+    cb = element('label', {class:"checkbox", for:"visible"+i}, cb);
+    var range = 
+        element('input', 
+                {class:"opacity", type:"range", min:"0", max:"1", step:"0.01"}, 
+                null);
+    var item = 
+        element('span', {}, name) + 
+        element('div', {id:'layer'+i, class:'fs1'}, cb + range);
+
+    return element('li', {id:'layer'+i}, cb + range);
 }

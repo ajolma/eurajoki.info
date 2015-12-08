@@ -6,30 +6,12 @@ function setupFeatureOverlay(map) {
         source: new ol.source.Vector(),
         map: map,
         style: function(feature, resolution) {
+            var key = feature.layer.title + feature.get('id');
             var text = resolution < 8 ? feature.get('id') : '';
-            if (!highlightStyleCache[text]) {
-                highlightStyleCache[text] = [new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#f00',
-                        width: 1
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'rgba(255,0,0,1)'
-                    }),
-                    text: new ol.style.Text({
-                        font: '12px Calibri,sans-serif',
-                        text: text,
-                        fill: new ol.style.Fill({
-                            color: '#000'
-                        }),
-                        stroke: new ol.style.Stroke({
-                            color: '#f00',
-                            width: 3
-                        })
-                    })
-                })];
+            if (!highlightStyleCache[key]) {
+                highlightStyleCache[key] = feature.layer.highlight(feature, text);
             }
-            return highlightStyleCache[text];
+            return highlightStyleCache[key];
         }
     });
 }
@@ -37,22 +19,21 @@ function setupFeatureOverlay(map) {
 var highlight;
 var displayFeatureInfo = function(pixel) {
     
+    var layer = null;
     var feature = null;
     if (pixel) {
-        feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
-            return feature;
+        var ret = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
+            return [layer, feature];
         });
-        if (!feature)
-            return;
+        if (!ret) return;
+        layer = get_layer(ret[0]);
+        feature = ret[1];
+        if (!(feature && layer && layer.info)) return;
     }
     
     var info = document.getElementById('info');
-    if (feature) {
-        info.innerHTML = 'Jokiosuus ' + feature.get('id') + ': ' 
-            + ' <div>Vesikasvit: ' + feature.get('vesikasvit') + '</div>'
-            + ' <div>Rantakasvit: ' + feature.get('rantakasvit') + '</div>'
-            + ' <div>Puut: ' + feature.get('puut') + '</div>'
-            + ' <div>Muuta: ' + feature.get('muuta') + '</div>';
+    if (feature && layer && layer.info) {
+        info.innerHTML = layer.info(feature);
     } else {
         info.innerHTML = '&nbsp;';
     }
@@ -62,10 +43,11 @@ var displayFeatureInfo = function(pixel) {
             featureOverlay.getSource().removeFeature(highlight);
         }
         if (feature) {
+            feature.layer = layer;
             featureOverlay.getSource().addFeature(feature);
         }
         highlight = feature;
+        return feature;
     }
-    
-};
 
+};
