@@ -8,19 +8,26 @@
   </head>
   <body>
 
-    <div id="id0" class="class0">
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eurajoki.info
-    </div>
-    
-    <div id="id1" class="class1">
-      <div id="map" class="map"></div>
-    </div>
-    
-    <div id="id2" class="class2">
-      <div id="layertree">
-        <ul></ul>
+    <div>
+      <div class="header">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eurajoki.info
       </div>
-      <div id="info">
+      <div class="gis">
+        <div class="left">
+          <div id="map" class="map"></div>
+        </div>
+        <div class="right">
+          <div id="layertree">
+            <ul></ul>
+          </div>
+          <div id="info">
+          </div>
+          <div id="plot-control">
+            <input type="button" value="plot" onclick="toggle_plot()">
+          </div>
+        </div>
+      </div>
+      <div class="plot">
       </div>
     </div>
 

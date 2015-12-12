@@ -1,5 +1,6 @@
 var map = null;
 var proj = null;
+var plot = false;
 
 (function() {
     boot_map({});
@@ -8,9 +9,56 @@ var proj = null;
 }());
 
 function window_resize() {
-    $('#map').height($(window).height() - 30);
-    $('#map').width($(window).width() - 200);
+    $('#map')
+        .height($(window).height() - 30 - $('.plot').height())
+        .width($(window).width() - 200);
     if (map) map.updateSize();
+}
+
+function toggle_plot() {
+    var plot = $('.plot');
+    var hw = $(window).height() - 30;
+    var h = plot.height();
+    var hm = hw/2.5;
+    if (h == 0) {
+        hw -= hm;
+        h = hm;
+    } else {
+        h = 0;
+    }
+    if (map) {
+        var s = map.getSize();
+        map.getView().setCenter(map.getCoordinateFromPixel([s[0]/2,hw/2]));
+    }
+    $('.gis').animate({height:hw}, 500);
+    if (h == 0)
+        plot.animate({height:h}, 500);
+    else
+        plot.animate({height:h}, 500, 'swing', show_plot);
+    $('#map')
+        .height(hw)
+        .width($(window).width() - 200);
+    if (map) {
+        map.updateSize();
+    }
+}
+
+function show_plot() {
+    //content.innerHTML = 'BOOM!';
+    
+    var d1 = [];
+    for (var i = 0; i < 14; i += 0.5) {
+	d1.push([i, Math.sin(i)]);
+    }
+    
+    var d2 = [[0, 3], [4, 8], [8, 5], [9, 13]];
+    
+    // A null signifies separate line segments
+    
+    var d3 = [[0, 12], [7, 12], null, [7, 2.5], [12, 2.5]];
+  
+    $.plot(".plot", [ d1, d2, d3 ]);
+
 }
 
 var container;

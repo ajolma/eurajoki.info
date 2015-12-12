@@ -2,7 +2,7 @@ body {
     margin: 0px;
 }
 
-#id0 {
+.header {
     height: 30px;
     text-align: left;
     color: #ffffff;
@@ -10,20 +10,27 @@ body {
     background-color: #6abf79;
 }
 
-#id1 {
+.gis {
+    background-color: white;
+    width: 100%;
+}
+
+.left {
     float: left;
     text-align: center;
 }
 
-.id3 {
-    display: block;
-}
-
-.class2 {
-    width: 200px;
+.right {
     float: right;
+    width: 200px;
     //background-color: #aaffaa;
     //font-family: Helvetica, Arial, Sans-Serif;
+}
+
+.plot {
+    overflow: hidden;
+    width: 100%;
+    height: 0px;
 }
 
 .fs1 {
@@ -49,7 +56,6 @@ input.opacity {
 #info {
     background-color: #aaffaa;
 }
-
 
 .ol-popup {
   position: absolute;
