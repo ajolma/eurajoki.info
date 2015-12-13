@@ -10,9 +10,12 @@ var layers = [
     {title:'Peruskartta 1962',ol:'peruskartat_1962_3067'},
     {title:'Senaatin kartat',ol:'senaatin_kartat_3067'}
 ];
+
 function get_layer(layer) {
     for (var i = 0; i < layers.length; i++) {
-        if (layers[i].layer == layer)
+        if (layers[i].layer == layer.layer)
+            return layers[i];
+        if (layers[i].title == layer.title)
             return layers[i];
     }
     return null;
@@ -61,7 +64,7 @@ function bindInputs(layerid, layer) {
         opacityInput.toggle();
         layer.setVisible(this.checked);
         if (!this.checked)
-            remove_highlighted(get_layer(layer));
+            remove_highlighted(get_layer({layer:layer}));
     });
     visibilityInput.prop('checked', layer.getVisible());
     opacityInput.hide();
@@ -177,6 +180,31 @@ function layer (layer, projection) {
             layer.highlight = function(feature, text) {
                 return [new ol.style.Style({
                     image: new ol.style.RegularShape({
+                        stroke: new ol.style.Stroke({
+                            color: '#f00',
+                            width: 2
+                        }),
+                        points: 5,
+                        radius: 10,
+                        radius2: 4,
+                        angle: 0
+                    }),
+                    text: new ol.style.Text({
+                        font: '12px Calibri,sans-serif',
+                        text: text,
+                        fill: new ol.style.Fill({
+                            color: '#000'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#f00',
+                            width: 3
+                        })
+                    })
+                })];
+            };
+            layer.selected = function(feature, text) {
+                return [new ol.style.Style({
+                    image: new ol.style.RegularShape({
                         fill: new ol.style.Fill({color: 'red'}),
                         stroke: new ol.style.Stroke({
                             color: '#f00',
@@ -223,18 +251,11 @@ function layer (layer, projection) {
                 })]
             };
         } else {
-            layer.feature_title = function(feature) {
-                return '';
-            };
-            layer.info = function(feature) {
-                return '';
-            };
-            layer.highlight = function(feature, text) {
-                return null;
-            };
-            layer.normal = function(feature, text) {
-                return null;
-            };
+            layer.feature_title = function(feature){return ''};
+            layer.info = function(feature){return ''};
+            layer.highlight = function(feature, text){return null};
+            layer.selected = function(feature, text){return null};
+            layer.normal = function(feature, text){return null};
         }
         var styleCache = {};
         layer.layer = new ol.layer.Vector({

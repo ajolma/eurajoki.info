@@ -38,3 +38,21 @@ function move_down(layers, i) {
     }
     return a;
 }
+
+function containsObject(obj, list) {
+    var i;
+    for (i = 0; i < list.length; i++) {
+        if (list[i] === obj) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function cmp_date(a,b) {
+    for (var i=0; i<3; i++) {
+        if (a[i] < b[i]) return -1;
+        if (a[i] > b[i]) return 1;
+    }
+    return 0;
+}
