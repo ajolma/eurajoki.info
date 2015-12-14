@@ -23,6 +23,12 @@ function get_layer(layer) {
 
 var layer_objects = [];
 
+var highlightStyleCache = {};
+var selectedStyleCache = {};
+
+var highlightedFeature;
+var selectedFeatures;
+
 function addLayers(map, lrs, proj) {
     var layer_list = $("#layertree ul");
     layer_list.html('');
@@ -42,6 +48,11 @@ function addLayers(map, lrs, proj) {
         layer_list.append(layer_item(n-i, layers[i].title, n));
     }
 
+    for (var i = n; i > 0; i--) {
+        bindInputs('#layer' + i, layers[n-i]);
+    }
+
+    /*
     map.getLayers().forEach(function(layer, i) {
         bindInputs('#layer' + i, layer);
         if (layer instanceof ol.layer.Group) {
@@ -50,10 +61,37 @@ function addLayers(map, lrs, proj) {
             });
         }
     });
+    */
 
     $('#layertree li > span').click(function() {
         $(this).siblings('div').toggle();
     }).siblings('div').hide();
+
+    highlightedFeature = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        map: map,
+        style: function(feature, resolution) {
+            var key = feature.layer.title + feature.get('id');
+            var text = resolution < 8 ? feature.get('id') : '';
+            if (!highlightStyleCache[key]) {
+                highlightStyleCache[key] = feature.layer.highlightStyle(feature, text);
+            }
+            return highlightStyleCache[key];
+        }
+    });
+
+    selectedFeatures = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        map: map,
+        style: function(feature, resolution) {
+            var key = feature.layer.title + feature.get('id');
+            var text = resolution < 8 ? feature.get('id') : '';
+            if (!selectedStyleCache[key]) {
+                selectedStyleCache[key] = feature.layer.selectedStyle(feature, text);
+            }
+            return selectedStyleCache[key];
+        }
+    });
 }
 
 function bindInputs(layerid, layer) {
@@ -62,20 +100,38 @@ function bindInputs(layerid, layer) {
     
     visibilityInput.on('change', function() {
         opacityInput.toggle();
-        layer.setVisible(this.checked);
+        layer.layer.setVisible(this.checked);
+        layer.setActive(this.checked);
         if (!this.checked)
-            remove_highlighted(get_layer({layer:layer}));
+            remove_highlighted(layer); //get_layer({layer:layer}));
     });
-    visibilityInput.prop('checked', layer.getVisible());
+    visibilityInput.prop('checked', layer.layer.getVisible());
     opacityInput.hide();
     
     opacityInput.on('input change', function() {
-        layer.setOpacity(parseFloat(this.value));
+        layer.layer.setOpacity(parseFloat(this.value));
     });
-    opacityInput.val(String(layer.getOpacity()));
+    opacityInput.val(String(layer.layer.getOpacity()));
 }
 
 function layer (layer, projection) {
+    layer.feature_title = function(feature) {return ''};
+    layer.info = function(feature){return ''};
+    layer.highlightStyle = function(feature, text){return null};
+    layer.selectedStyle = function(feature, text){return null};
+    layer.normalStyle = function(feature, text){return null};
+    layer.selectFeature = function(feature) {
+        feature.layer = layer;
+        selectedFeatures.getSource().addFeature(feature);
+    };
+    layer.unselectFeature = function(feature) {
+        selectedFeatures.getSource().removeFeature(feature);
+    };
+    layer.unselectAllFeatures = function() {
+        selectedFeatures.getSource().clear();
+    };
+    layer.setActive = function(active) {
+    };
     if (layer.bg && layer.bg == 'mml') {
         layer.layer = new ol.layer.Tile({
             opacity: 1,
@@ -130,7 +186,26 @@ function layer (layer, projection) {
                     + ' <div>Puut: ' + feature.get('puut') + '</div>'
                     + ' <div>Muuta: ' + feature.get('muuta') + '</div>';
             };
-            layer.highlight = function(feature, text) {
+            layer.highlightStyle = function(feature, text) {
+                return [new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#f00',
+                        width: 1
+                    }),
+                    text: new ol.style.Text({
+                        font: '12px Calibri,sans-serif',
+                        text: text,
+                        fill: new ol.style.Fill({
+                            color: '#000'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#f00',
+                            width: 3
+                        })
+                    })
+                })];
+            };
+            layer.selectedStyle = function(feature, text) {
                 return [new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: '#f00',
@@ -152,7 +227,7 @@ function layer (layer, projection) {
                     })
                 })];
             };
-            layer.normal = function(feature, text) {
+            layer.normalStyle = function(feature, text) {
                 return [new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: '#00f',
@@ -177,7 +252,7 @@ function layer (layer, projection) {
                     + ' <div>Kommentti: ' + feature.get('kommentti') + '</div>'
                     + ' <div>Lisätieto: ' + feature.get('info2') + '</div>';
             };
-            layer.highlight = function(feature, text) {
+            layer.highlightStyle = function(feature, text) {
                 return [new ol.style.Style({
                     image: new ol.style.RegularShape({
                         stroke: new ol.style.Stroke({
@@ -202,7 +277,7 @@ function layer (layer, projection) {
                     })
                 })];
             };
-            layer.selected = function(feature, text) {
+            layer.selectedStyle = function(feature, text) {
                 return [new ol.style.Style({
                     image: new ol.style.RegularShape({
                         fill: new ol.style.Fill({color: 'red'}),
@@ -228,7 +303,7 @@ function layer (layer, projection) {
                     })
                 })];
             };
-            layer.normal = function(feature, text) {
+            layer.normalStyle = function(feature, text) {
                 return [new ol.style.Style({
                     image: new ol.style.RegularShape({
                         //fill: new ol.style.Fill({color: 'red'}),
@@ -250,12 +325,13 @@ function layer (layer, projection) {
                     })
                 })]
             };
-        } else {
-            layer.feature_title = function(feature){return ''};
-            layer.info = function(feature){return ''};
-            layer.highlight = function(feature, text){return null};
-            layer.selected = function(feature, text){return null};
-            layer.normal = function(feature, text){return null};
+            layer.setActive = function(active) {
+                var style = document.getElementById("plot-control").style;
+                if (active)
+                    style.display = "inline";
+                else
+                    style.display = "none";
+            };
         }
         var styleCache = {};
         layer.layer = new ol.layer.Vector({
@@ -270,7 +346,7 @@ function layer (layer, projection) {
             style: function(feature, resolution) {
                 var text = resolution < 8 ? layer.feature_title(feature) : '';
                 if (!styleCache[text]) {
-                    styleCache[text] = layer.normal(feature, text);
+                    styleCache[text] = layer.normalStyle(feature, text);
                 }
                 return styleCache[text];
             }

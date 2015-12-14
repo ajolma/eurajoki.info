@@ -24,9 +24,9 @@ function boot_map(options) {
         overlays: [popup],
         target: 'map',
         controls: ol.control.defaults({
-            attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+            attributionOptions:{
                 collapsible: false
-            })
+            }
         }),
         view: proj.view
     });
@@ -40,11 +40,7 @@ function boot_map(options) {
     setupDates();
 
     setupSensors();
-    sensorLayer = get_layer({title:'Mittauspisteet'}).layer;
-    sensors.sensors = sensorLayer.getSource();
-    sensors.select = selectFeature;
-    sensors.unselect = unselectFeature;
-    sensors.unselectAll = unselectAllFeatures;
+    sensorLayer = get_layer({title:'Mittauspisteet'});
 
 }
 

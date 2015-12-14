@@ -2,13 +2,7 @@ var auto_plot = 0;
 var syncing = false;
 var selected_variables = {};
 var selected_locations = {};
-
-var sensors = {
-    sensors:function(){return[]},
-    select:function(sensor){},
-    unselect:function(sensor){},
-    unselectAll:function(){}
-};
+var sensorLayer = null; // layer as defined in layers.js
 
 function onDatasetsReceived(param) {
     datasets = param;
@@ -56,12 +50,12 @@ function locations_info() {
     $('#location_info').accordion("refresh");
     $('.mpad').click(function(e){
         var f = null;
-        $.each(sensor_layer.selectedFeatures, function(i, feature) {
-            if (feature.attributes.koodi == e.toElement.id)
+        sensorLayer.layer.getSource().forEachFeature(function(feature) {
+            if (feature.get('koodi') == e.toElement.id)
                 f = feature;
         });
         syncing = true;
-        sensors.unselect(f);
+        sensorLayer.unselectFeature(f);
         syncing = false;
         sync_locations_to_features();
         locations_info();
@@ -143,7 +137,7 @@ function selectVariable() {
 function sync_variables_to_locations(feature) {
     if (feature != null) {
         // only add variables from this location to selected_variables
-        $.each(datasets[feature.attributes.koodi].muuttujat, function(i, muuttuja) {
+        $.each(datasets[feature.get('koodi')].muuttujat, function(i, muuttuja) {
             selected_variables[muuttuja] = 1;
         });
     } else {
@@ -168,8 +162,8 @@ function sync_locations_to_features() {
     if (datasets == null) return;
     var koodit = [];
     selected_locations = {};
-    $.each(sensor_layer.selectedFeatures, function(i, feature) {
-        var dataset = datasets[feature.attributes.koodi];
+    sensorLayer.layer.getSource().forEachFeature(function(feature) {
+        var dataset = datasets[feature.get('koodi')];
         if (dataset != null) {
             koodit.push(dataset.koodi);
             selected_locations[dataset.koodi] = 1;
@@ -201,12 +195,12 @@ function sync_locations_to_variables() {
 
 function sync_features_to_locations() {
     syncing = true;
-    sensors.unselectAll();
+    sensorLayer.unselectAllFeatures();
     $("#location :selected").each(function() {
         var koodi = $(this).val();
-        sensors.sensors.forEachFeature(function(feature) {
+        sensorLayer.layer.getSource().forEachFeature(function(feature) {
             if (feature.get('koodi') == koodi)
-                sensors.select(feature);
+                sensorLayer.selectFeature(feature);
         });
     });
     syncing = false;

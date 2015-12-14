@@ -1,9 +1,5 @@
-var sensorLayer = null;
-var highlightStyleCache = {};
-var selectedStyleCache = {};
-var featureOverlay;
-var selectedFeatures;
-var highlight;
+var highlight = {layer:null,feature:null};
+
 var popup;
 
 function setupPopup() {
@@ -13,9 +9,9 @@ function setupPopup() {
     closer.onclick = function() {
         popup.setPosition(undefined);
         closer.blur();
-        if (highlight) {
-            featureOverlay.getSource().removeFeature(highlight);
-            highlight = null;
+        if (highlight.feature) {
+            highlightedFeature.getSource().removeFeature(highlight.feature);
+            highlight.feature = null;
         }
         return false;
     };
@@ -32,46 +28,26 @@ function setupPopup() {
 
 function setupFeatureOverlay(map) {
 
-    featureOverlay = new ol.layer.Vector({
-        source: new ol.source.Vector(),
-        map: map,
-        style: function(feature, resolution) {
-            var key = feature.layer.title + feature.get('id');
-            var text = resolution < 8 ? feature.get('id') : '';
-            if (!highlightStyleCache[key]) {
-                highlightStyleCache[key] = feature.layer.highlight(feature, text);
-            }
-            return highlightStyleCache[key];
-        }
-    });
-
-    selectedFeatures = new ol.layer.Vector({
-        source: new ol.source.Vector(),
-        map: map,
-        style: function(feature, resolution) {
-            var key = feature.layer.title + feature.get('id');
-            var text = resolution < 8 ? feature.get('id') : '';
-            if (!selectedStyleCache[key]) {
-                selectedStyleCache[key] = feature.layer.selected(feature, text);
-            }
-            return selectedStyleCache[key];
-        }
-    });
-
     map.on('pointermove', function(evt) {
         if (evt.dragging) {
             return;
         }
         var pixel = map.getEventPixel(evt.originalEvent);
-        var feature = displayFeatureInfo(pixel);
-        if (feature) {
-            var content = $("#popup-content");
-            content
-                .css('width','auto')
-                .css('height','auto');
-            content.html(feature.layer.info(feature));
-            popup.setPosition(evt.coordinate);
-        }
+        var ret = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
+            return {layer:layer,feature:feature};
+        });
+        if (!ret) return;
+        ret.layer = get_layer({layer:ret.layer});
+        if (!(ret.layer && ret.feature)) return;
+        if (ret.layer == highlight.layer && ret.feature == highlight.feature) return;
+        ret.feature.layer = ret.layer;
+        displayFeatureInfo(ret.layer, ret.feature);
+        var content = $("#popup-content");
+        content
+            .css('width','auto')
+            .css('height','auto');
+        content.html(ret.layer.info(ret.feature));
+        popup.setPosition(evt.coordinate);
     });
 
     map.on('singleclick', function(evt) {
@@ -83,64 +59,26 @@ function handleFeatureSelection() {
     var src = selectedFeatures.getSource();
     var selected = false;
     src.forEachFeature(function(feature){
-        if (feature == highlight) {
+        if (feature == highlight.feature) {
             selected = true;
             return true;
         }
     });
     if (selected)
-        src.removeFeature(highlight);
+        src.removeFeature(highlight.feature);
     else
-        src.addFeature(highlight);
+        src.addFeature(highlight.feature);
 }
 
-function allFeatures() {
-    sensorLayer.getSource().getFeatures();
-}
-
-function selectFeature(feature) {
-    selectedFeatures.getSource().addFeature(feature);
-}
-
-function unselectFeature(feature) {
-    selectedFeatures.getSource().removeFeature(feature);
-}
-
-function unselectAllFeatures() {
-    selectedFeatures.getSource().clear();
-}
-
-var displayFeatureInfo = function(pixel) {
-    var layer = null;
-    var feature = null;
-    if (pixel) {
-        var ret = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
-            return [layer, feature];
-        });
-        if (!ret) return;
-        layer = get_layer({layer:ret[0]});
-        feature = ret[1];
-        if (!(feature && layer && layer.info)) return;
-    }
-
-    /*
-    var info = document.getElementById('info');
-    if (feature && layer && layer.info) {
-        info.innerHTML = layer.info(feature);
-    } else {
-        info.innerHTML = '&nbsp;';
-    }
-    */
+var displayFeatureInfo = function(layer, feature) {
     
-    if (feature !== highlight) {
-        if (highlight) {
-            featureOverlay.getSource().removeFeature(highlight);
-        }
-        if (feature) {
-            feature.layer = layer;
-            featureOverlay.getSource().addFeature(feature);
-        }
-        highlight = feature;
-        return feature;
+    if (highlight.feature) {
+        highlightedFeature.getSource().removeFeature(highlight.feature);
     }
+    if (feature) {
+        highlightedFeature.getSource().addFeature(feature);
+    }
+    highlight.layer = layer;
+    highlight.feature = feature;
+
 };
