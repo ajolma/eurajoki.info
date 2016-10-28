@@ -26,7 +26,7 @@ sub new {
 
 sub call {
     my ($self, $env) = @_;
-    say STDERR "call";
+    #say STDERR "call";
     my $ret = common_responses($env);
     return $ret if $ret;
 
@@ -34,17 +34,17 @@ sub call {
     #say Dumper $request;
     my $parameters = $request->parameters;
     for my $key (sort keys %$parameters) {
-        my $val = $parameters->{$key} //= '';
-        say STDERR "$key => $val";
+        my $val = $parameters->{$key} // '';
+        #say STDERR "$key => $val";
     }
     for my $key (sort keys %{$request->uploads}) {
-        my $val = $request->uploads->{$key} //= '';
-        say STDERR "up: $key => $val";
+        my $val = $request->uploads->{$key} // '';
+        #say STDERR "up: $key => $val";
     }
 
     my $cmd = $parameters->{cmd} // '';
-    $self->{email} = $parameters->{email} //= '';
-    $self->{password} = $parameters->{password} //= '';
+    $self->{email} = $parameters->{email} // '';
+    $self->{password} = $parameters->{password} // '';
     $self->{story} = $parameters->{story} // 0;
     $self->{story} =~ s/[^0-9]//g;
     $self->{pic} = $parameters->{pic} // 0;
@@ -53,6 +53,7 @@ sub call {
     my ($connect, $user, $pass) = connect_params($self);
     my $dbh = DBI->connect($connect, $user, $pass) or croak('no db');
 
+    #say STDERR "email = $self->{email} cmd = $cmd and pic = $self->{pic}";
     return $self->public_pic($dbh) if (!$self->{email} and !$cmd and $self->{pic});
 
     # check that story id matches email and password
@@ -109,7 +110,8 @@ sub public_pic {
     my $rv = $sth->execute or croak($dbh->errstr);
     my ($fn) = $sth->fetchrow_array;
     $self->return_400 unless defined $fn;
-    $fn = $self->{config}{images}.'/'.$fn.'.jpg';
+    $fn = $self->{config}{images}.'/'.$fn;
+    #say STDERR $fn;
     Plack::App::File::serve_path($self, undef, $fn);
 }
 

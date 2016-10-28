@@ -7,6 +7,7 @@ use strict;
 use warnings;
 use 5.010000; # say // and //=
 use Carp;
+use DateTime;
 use Util;
 use JSON;
 
@@ -217,22 +218,17 @@ sub get_datasets {
 sub get_dataset {
     my ($self, $dbh) = @_;
 
-    my @suureet = @{$self->{suureet}};
-    my @paikat = @{$self->{paikat}};
+    my @suureet = sort {$a cmp $b} @{$self->{suureet}};
+    my @paikat = sort {$a cmp $b} @{$self->{paikat}};
 
     return html200("<html>required parameter suure or paikka missing</html>") if (@suureet == 0 or @paikat == 0);
 
     print STDERR "suureet=@suureet, paikat=@paikat\n" if $self->{config}{debug};
 
-    my $paikka_sql = join ' or paikka=', @paikat;
-    $paikka_sql =~ s/^ or//;
-
-    my $suure_sql = join ' or suure=', @paikat;
-    $suure_sql =~ s/^ or//;
-
+    my $paikka_sql = "paikka='".join("' or paikka='", @paikat)."'";
     my %paikka2nimi;
     my $tmp = $paikka_sql;
-    $tmp =~ s/paikka =/koodi =/g;
+    $tmp =~ s/paikka=/koodi=/g;
     my $sql = "select koodi,nimike from mittauskohteet where $tmp";
     my $sth = $dbh->prepare($sql) or croak($dbh->errstr);
     my $rv = $sth->execute or croak($dbh->errstr);
@@ -242,6 +238,7 @@ sub get_dataset {
         $paikka2nimi{$paikka} = $nimi;
     }
 
+    my $suure_sql = "suure='".join("' or suure='", @suureet)."'";
     my %suureet;
     $sql = "select suure,nimi,visualisointi from suureet where $suure_sql";
     $sth = $dbh->prepare($sql) or croak($dbh->errstr);

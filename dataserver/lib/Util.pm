@@ -49,7 +49,8 @@ sub connect_params {
 sub html200 {
     my $html = shift;
     return [ 200, 
-             ['Content-Type' => 'text/html; charset=utf-8'], 
+             [ 'Content-Type' => 'text/html; charset=utf-8',
+               'Access-Control-Allow-Origin' => '*' ], 
              [encode utf8 => $html]
         ];
 }
@@ -58,7 +59,11 @@ sub json200 {
     my $data = shift;
     my $json = JSON->new;
     $json->utf8;
-    return [200, ['Content-Type' => 'application/json; charset=utf-8'], [$json->encode($data)]];
+    return [
+        200, 
+        [ 'Content-Type' => 'application/json; charset=utf-8',
+          'Access-Control-Allow-Origin' => '*' ],
+        [$json->encode($data)]];
 }
 
 sub cmp_dates {
