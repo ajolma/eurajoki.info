@@ -31,7 +31,6 @@ function create_vegetation_layer(options) {
 
     vegetation_layer = new OpenLayers.Layer.Vector("Kasvillisuus", {
         strategies: [
-            new OpenLayers.Strategy.BBOX(),
             new OpenLayers.Strategy.Fixed()
         ],
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({
