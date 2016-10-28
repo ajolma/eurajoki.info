@@ -60,7 +60,7 @@ function new_identity() {
             version: "1.1.0",
             srsName: "EPSG:3857",
             url: config.url.tarinapaikat,
-            featureType: config.prefix.tarinapaikat+".tarinat.geom",
+            featureType: config.featureType.tarinapaikat_private,
             outputFormat: "GML2"
         }),
         filter: new OpenLayers.Filter.Logical({

@@ -38,7 +38,7 @@ function create_vegetation_layer(options) {
             version: "1.1.0",
             srsName: "EPSG:3857",
             url: config.url.joki,
-            featureType: config.prefix.joki+".joki.geom",
+            featureType: config.featureType.joki,
             outputFormat: "GML2"
         }),
         visibility: options.visibility,

@@ -27,7 +27,7 @@ function overlays() {
     var ilmakuvat = new OpenLayers.Layer.TMS("Ilmakuvat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: config.url.overlay_tiles+'/aerial-images/tiles.pl/',
+        myUrl: config.url.overlay_tiles+'/ilmakuvat3857/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -38,7 +38,7 @@ function overlays() {
     var perus62 = new OpenLayers.Layer.TMS("Peruskartta 1962", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: config.url.overlay_tiles+'/peruskartat_1962/tiles.pl/',
+        myUrl: config.url.overlay_tiles+'/peruskartta62_3857/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,
@@ -49,7 +49,7 @@ function overlays() {
     var senaatin = new OpenLayers.Layer.TMS("Senaatin kartat", "", {
         serviceVersion: '.',
         layername: '.',
-        myUrl: config.url.overlay_tiles+'/senaatin_kartat/tiles.pl/',
+        myUrl: config.url.overlay_tiles+'/senaatin_kartat_3857/',
         alpha: true,
         type: 'png',
         isBaseLayer: false,

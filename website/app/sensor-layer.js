@@ -272,7 +272,6 @@ function create_sensor_layer(options) {
 
     sensor_layer = new OpenLayers.Layer.Vector("Mittauskohteet", {
         strategies: [
-            new OpenLayers.Strategy.BBOX(),
             new OpenLayers.Strategy.Fixed()
         ],
         protocol: new OpenLayers.Protocol.WFS.v1_1_0({

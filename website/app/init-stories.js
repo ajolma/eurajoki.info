@@ -19,7 +19,7 @@ function init() {
     map.addLayers(layers);
     
     layers = overlays();
-    layers.push(create_story_layer());
+    layers.push(create_story_layer({blockingDialog: true}));
     
     map.addLayers(layers);
 

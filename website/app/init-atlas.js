@@ -2,6 +2,7 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
+var panels = {};
 var map = null;
 
 function init() {
@@ -15,12 +16,31 @@ function init() {
 
     layers = overlays();
     map.addLayers(layers);
+    panels.aerial_photos = "Ilmakuvat";
+    panels.basemap_1962 = "Peruskartta 1962";
+    panels.senate_maps = "Senaatin kartat";
 
     layers = [];
     layers.push(create_sensor_layer({visibility: false, blockingDialog: true}));
+    panels.sensors = "Mittauskohteet";
+
     layers.push(create_story_layer({visibility: false, blockingDialog: true}));
-    if ('Vegetation' in config.overlays && config.overlays.Vegetation)
-        layers.push(create_vegetation_layer({visibility: false, blockingDialog: true}));
+    panels.stories = "Tarinat";
+
+    layers.push(vegetation_layer());
+
+//    layers.push(create_extra_layer(
+//        { name: "Purkupisteet", 
+//          table: "purkupisteet", 
+//          graphic: "cross",
+//          popup: function(feature) {
+//              return { title:  feature.attributes.purkutunnu, 
+//                       body:   feature.attributes.kuvaus, 
+//                       height: 100 };
+//          }
+//        }));
+//    panels.purkupisteet = "Purkupisteet";
+
     map.addLayers(layers);
 
     createControls({hoverLayers:layers, selectLayers:layers});
@@ -31,6 +51,42 @@ function init() {
         clearPopup();
     });
 
+}
+
+function vegetation_layer() {
+
+    var layer = create_vegetation_layer({visibility: false, blockingDialog: true});
+
+    $.ajax({
+	url: config.url.kasvillisuus+'request=GetPlants',
+	type: "GET",
+	dataType: "json",
+	success: onPlantsReceived
+    });
+    
+    $.ajax({
+	url: config.url.kasvillisuus+'request=GetPlantsOnRiver',
+	type: "GET",
+	dataType: "json",
+	success: function(param) {
+            plants_on_river_elements = param;
+        }
+    });
+    
+    $( "#selectable" ).selectable({
+        selected: function( event, ui ) {
+            selected_plants[ui.selected.id] = 1;
+            update_vegetation_layer();
+        },
+        unselected: function( event, ui ) {
+            delete selected_plants[ui.unselected.id];
+            update_vegetation_layer();
+        } 
+    });
+
+    panels.vegetation = "Kasvillisuus";
+
+    return layer;
 }
 
 function onPlantsReceived(param) {
@@ -60,35 +116,6 @@ $(function() {
     
     config();
 
-    if ('Vegetation' in config.overlays && config.overlays.Vegetation) {
-        $.ajax({
-	    url: config.url.kasvillisuus+'request=GetPlants',
-	    type: "GET",
-	    dataType: "json",
-	    success: onPlantsReceived
-        });
-        
-        $.ajax({
-	    url: config.url.kasvillisuus+'request=GetPlantsOnRiver',
-	    type: "GET",
-	    dataType: "json",
-	    success: function(param) {
-                plants_on_river_elements = param;
-            }
-        });
-
-        $( "#selectable" ).selectable({
-            selected: function( event, ui ) {
-                selected_plants[ui.selected.id] = 1;
-                update_vegetation_layer();
-            },
-            unselected: function( event, ui ) {
-                delete selected_plants[ui.unselected.id];
-                update_vegetation_layer();
-            } 
-        });
-    }
-
     $( "#dialog" ).dialog({
         autoOpen: false,
         width: 'auto',
@@ -100,18 +127,6 @@ $(function() {
     });
 
     init();
-
-    var panels = {
-        vegetation: "Kasvillisuus",
-        stories: "Tarinat",
-        sensors: "Mittauskohteet",
-        aerial_photos: "Ilmakuvat",
-        basemap_1962: "Peruskartta 1962",
-        senate_maps: "Senaatin kartat"
-    };
-
-    if ('Vegetation' in config.overlays && config.overlays.Vegetation)
-        panels.vegetation = "Kasvillisuus";
 
     for (var panel in panels) {
         $('#'+panel+'_panel').accordion({collapsible: true});

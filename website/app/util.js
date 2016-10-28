@@ -60,3 +60,11 @@ function element(tag, attrs, text) {
     }
     return '<'+tag+a+'>'+text+'</'+tag+'>';
 }
+
+function parseArray(arrStr) {
+    //var x = arrStr.substring(1, arrStr.length - 1);
+    //x = x.replace(/^\d+:/, "");
+    //var l = x.split(",");
+    var l = arrStr.split(",");
+    return l;
+}

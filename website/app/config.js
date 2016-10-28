@@ -2,47 +2,28 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
+var base = 'http://biwatech.com:800/Eurajoki';
 var config;
 
 function config() {
-    config = {numZoomLevels: 20,
-              baseLayers: [
-                  'GoogleMap',
-                  'GoogleTerrain',
-                  'GoogleSat',
-                  'OpenStreetMap',
-                  'MMLTausta',
-                  'MMLPerus',
-                  'MMLOrto'                  
-              ],
-              overlays: {
-                  Vegetation: 0
-              },
-              featureSize: 13,
-              raaka: 0,
-              app: 'Eurajoki',
-              editor: 0,
-              paikka: [],
-              suure: [],
-              server: {
-                  wfs: {mittauspisteet: 'ajolma.net',tarinapaikat: 'ajolma.net',joki: 'localhost'},
-                  data: 'ajolma.net',
-                  tarina: 'ajolma.net',
-                  kasvillisuus: 'localhost',
-                  kuva: 'ajolma.net',
-                  overlay_tiles: 'ajolma.net'
-              },
-              prefix: {
-                  mittauspisteet: 'ej',
-                  tarinapaikat: 'ej',
-                  joki: 'local'
-              },
-              layer : {
-                  mittauspisteet: 'mittauskohteet2.geom'
-              },
-              from: 0,
-              to: 0
-             };
+    config = {
+        numZoomLevels: 20,
+        baseLayers: [
+            'MMLTausta',
+            'MMLPerus',
+            'MMLOrto',
+            'GoogleMap',
+            'GoogleTerrain',
+            'GoogleSat',
+            'OpenStreetMap'
+        ],
+        featureSize: 13,
+        editor: 0,
+        paikka: [],
+        suure: [],
+        from: 0,
+        to: 0
+    };
     config = $.extend(config, params());
     if( typeof config.paikka === 'string' ) {
         config.paikka = [ config.paikka ];
@@ -70,15 +51,27 @@ function config() {
         }
     }
     // hack ends
-    config.url = {mittauspisteet: 'http://'+config.server.wfs.mittauspisteet+'/'+config.app+'/wfs.pl',
-                  tarinapaikat: 'http://'+config.server.wfs.tarinapaikat+'/'+config.app+'/wfs.pl',
-                  joki: 'http://'+config.server.wfs.joki+'/'+config.app+'/wfs.pl',
-                  data: 'http://'+config.server.data+'/'+config.app+'/m5json.pl?raaka='+config.raaka+'&',
-                  tarina: 'http://'+config.server.tarina+'/'+config.app+'/stories.pl',
-                  kuva: 'http://'+config.server.kuva+'/'+config.app+'/files.pl',
-                  kasvillisuus: 'http://'+config.server.kasvillisuus+'/'+config.app+'/data.pl?',
-                  overlay_tiles: 'http://'+config.server.overlay_tiles+'/'+config.app
-                 };
-    config.featureType = {sensors: config.prefix.mittauspisteet+"."+config.layer.mittauspisteet
-                         };
+    config.url = {
+        // WFS
+        mittauspisteet: base+'/WFS',
+        tarinapaikat: base+'/WFS',
+        joki: base+'/WFS',
+        biwa_wfs_2: base+'/WFS',
+
+        // TMS
+        overlay_tiles: base+'/TMS',
+
+        // other
+        data: base+'/tss?',
+        kasvillisuus: base+'/veg?',
+        tarina: base+'/sto',
+        kuva: base+'/pic?',
+        
+    };
+    config.featureType = {
+        sensors: 'ej.mittauskohteet2.geom',
+        tarinapaikat_private: 'ej.tarinat.geom',
+        tarinapaikat_public: 'ej.public_tarinat3.geom',
+        joki: 'ej.joki.geom'
+    };
 }
