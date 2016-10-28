@@ -8,7 +8,7 @@
     <title>Eurajoki.info | Raportteja</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="EXPIRES" CONTENT="Wed, 13 Nov 2013 20:00:00 GMT" />
-    <link rel="shortcut icon" href="/favicon.ico" /> 
+    <link rel="shortcut icon" href="favicon.ico" /> 
     <?php include "design/include.html"; ?>
     <style type="text/css">
       .left { float:left; width:800px; margin:0; padding:10px;}

@@ -7,7 +7,7 @@
   <head>
     <title>Eurajoki.info | Tarinat</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="shortcut icon" href="/favicon.ico" /> 
+    <link rel="shortcut icon" href="favicon.ico" /> 
     <meta http-equiv="EXPIRES" CONTENT="Wed, 13 Nov 2013 20:00:00 GMT" />
 
     <?php include "design/include.html"; ?>

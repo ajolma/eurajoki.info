@@ -8,7 +8,7 @@
     <title>Eurajoki.info | Tietoa</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="EXPIRES" CONTENT="Wed, 13 Nov 2013 20:00:00 GMT" />
-    <link rel="shortcut icon" href="/favicon.ico" /> 
+    <link rel="shortcut icon" href="favicon.ico" /> 
     <?php include "design/include.html"; ?>
     <link rel="stylesheet" type="text/css" href="css/tietoa.css" />
   </head>

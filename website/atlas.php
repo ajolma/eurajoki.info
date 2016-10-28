@@ -7,7 +7,7 @@
   <head>
     <title>Eurajoki.info | Atlas</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="shortcut icon" href="/favicon.ico" /> 
+    <link rel="shortcut icon" href="favicon.ico" /> 
     <meta http-equiv="EXPIRES" content="Wed, 13 Nov 2013 20:00:00 GMT" />
 
     <?php header('Access-Control-Allow-Origin: *'); ?>
@@ -33,6 +33,7 @@
     <script language="javascript" type="text/javascript" src="app/sensor-layer.js"></script>
     <script language="javascript" type="text/javascript" src="app/story-layer.js"></script>
     <script language="javascript" type="text/javascript" src="app/vegetation-layer.js"></script>
+    <script language="javascript" type="text/javascript" src="app/extra-layer.js"></script>
     <script language="javascript" type="text/javascript" src="app/map.js"></script>
     <script language="javascript" type="text/javascript" src="app/init-atlas.js"></script>
     
@@ -50,7 +51,7 @@
           <ol id="selectable"></ol>
         </div>
 
-        <table id="atlas_layout" style="width:100%"><tbody><tr><td><div id="map"></div></td><td width=175px valign="top">
+        <table id="atlas_layout" style="width:100%"><tbody><tr><td valign="top"><div id="map"></div></td><td width=175px valign="top">
                 <h3>Karttatasot</h3>
                 <div class="map_overlays"></div>
                 <h3>Taustakartta</h3>

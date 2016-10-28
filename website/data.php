@@ -15,7 +15,7 @@
     <meta property="og:title" content="Eurajoki.info | Mittaustietoa" />
     <meta property="og:image" content="http://eurajoki.info/images/mittaustieto.jpg" />
 
-    <link rel="shortcut icon" href="/favicon.ico" /> 
+    <link rel="shortcut icon" href="favicon.ico" /> 
     <?php include "design/include.html"; ?>
 
     <link rel="stylesheet" type="text/css" href="/jquery/jquery-ui.css" />
