@@ -42,3 +42,15 @@
 .ui-accordion .ui-accordion-content { 
     padding: 0.5em 0.3em; 
 }
+
+.gm-style {
+    font-size: 12px;
+}
+
+.body h2 {
+    font-size: 26px;
+}
+
+.ui-widget-content a {
+    color: #00aabd;
+}
