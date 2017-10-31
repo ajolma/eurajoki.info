@@ -14,7 +14,7 @@ use Time::HiRes qw/gettimeofday/;
 use DBI;
 use CGI;
 
-my $url_base = 'http://ajolma.net/Eurajoki/';
+my $url_base = 'http://biwatech.com/Eurajoki/';
 my $me = $url_base.'files.pl';
 my $image_path = '/var/www/image-store';
 

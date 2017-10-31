@@ -1,6 +1,9 @@
+var server = 'arijolma.org/Eurajoki2';
+
 var config = {
     url: {
-        data: 'http://localhost/Eurajoki/tss?'
+        wfs: 'http://' + server + '/WFS?',
+        data: 'http://' + server + '/tss?'
     },
     paikka: '',
     suure: ''

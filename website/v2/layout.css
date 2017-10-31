@@ -23,6 +23,7 @@ body {
 .right {
     float: right;
     width: 200px;
+    overflow: auto;
     //background-color: #aaffaa;
     //font-family: Helvetica, Arial, Sans-Serif;
 }

@@ -8,9 +8,11 @@ var proj = null;
 }());
 
 function window_resize() {
+    var h = $(window).height() - 30 - $('.plot').height();
     $('#map')
-        .height($(window).height() - 30 - $('.plot').height())
+        .height(h)
         .width($(window).width() - 200);
+    $('.right').css('max-height', h);
     if (map) map.updateSize();
 }
 

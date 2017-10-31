@@ -1,6 +1,4 @@
-var wfs_service = 
-    'http://localhost/Eurajoki/WFS?'+
-    'SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&SRSNAME=EPSG:3067&outputformat=application/json';
+var wfs_service = 'SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&SRSNAME=EPSG:3067&outputformat=application/json';
 
 var layers = [
     {title:'Joki',v:'ej.joki.geom'},
@@ -160,7 +158,7 @@ function layer (layer, projection) {
             extent: projection.extent,
             visible: false,
             source: new ol.source.WMTS({
-                url: 'http://localhost/Eurajoki/WMTS',
+                url: 'http://' + server + '/WMTS',
                 layer: layer.ol,
                 matrixSet: 'ETRS-TM35FIN',
                 format: 'image/png',
@@ -327,10 +325,13 @@ function layer (layer, projection) {
             };
             layer.setActive = function(active) {
                 var style = document.getElementById("plot-control").style;
-                if (active)
+                if (active) {
                     style.display = "inline";
-                else
+                    window_resize();
+                } else {
                     style.display = "none";
+                    hidePlot(window_resize);
+                }
             };
         }
         var styleCache = {};
@@ -339,7 +340,7 @@ function layer (layer, projection) {
             source: new ol.source.Vector({
                 format: new ol.format.GeoJSON(),
                 url: function(extent, resolution, projection) {
-                    return wfs_service + '&TYPENAME=' + layer.v;
+                    return config.url.wfs + wfs_service + '&TYPENAME=' + layer.v;
                 },
                 strategy: ol.loadingstrategy.all
             }),

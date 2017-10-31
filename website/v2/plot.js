@@ -1,33 +1,6 @@
-function toggle_plot() {
-    var plot = $('.plot');
-    var hw = $(window).height() - 30;
-    var h = plot.height();
-    var hm = hw/2.5;
-    if (h == 0) {
-        hw -= hm;
-        h = hm;
-    } else {
-        h = 0;
-    }
-    if (map) {
-        var s = map.getSize();
-        map.getView().setCenter(map.getCoordinateFromPixel([s[0]/2,hw/2]));
-    }
-    $('.gis').animate({height:hw}, 500);
-    if (h == 0)
-        plot.animate({height:h}, 500);
-    else
-        plot.animate({height:h}, 500, 'swing', show_plot);
-    $('#map')
-        .height(hw)
-        .width($(window).width() - 200);
-    if (map) {
-        map.updateSize();
-    }
-}
-
 function showPlot() {
     var plot = $('.plot');
+    plot.width($(window).width() - 200);
     var hw = $(window).height() - 30;
     var h = plot.height();
     var hm = hw/2.5;
@@ -41,7 +14,7 @@ function showPlot() {
         var s = map.getSize();
         map.getView().setCenter(map.getCoordinateFromPixel([s[0]/2,hw/2]));
     }
-    $('.gis').animate({height:hw}, 500);
+    $('.left').animate({height:hw}, 500);
     plot.animate({height:h}, 500, 'swing', show_plot);
     $('#map')
         .height(hw)
@@ -51,7 +24,7 @@ function showPlot() {
     }
 }
 
-function hidePlot() {
+function hidePlot(complete) {
     var plot = $('.plot');
     var hw = $(window).height() - 30;
     var h = plot.height();
@@ -64,8 +37,11 @@ function hidePlot() {
         var s = map.getSize();
         map.getView().setCenter(map.getCoordinateFromPixel([s[0]/2,hw/2]));
     }
-    $('.gis').animate({height:hw}, 500);
-    plot.animate({height:h}, 500);
+    $('.left').animate({height:hw}, 500);
+    if (complete) 
+        plot.animate({height:h}, 500, 'swing', complete);
+    else
+        plot.animate({height:h}, 500);
     $('#map')
         .height(hw)
         .width($(window).width() - 200);

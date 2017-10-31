@@ -2,7 +2,7 @@
 * https://github.com/ajolma/eurajoki.info
 * Copyright 2015 Pyhäjärvi-instituutti; Licensed GPL2 */
 
-var base = 'http://biwatech.com:800/Eurajoki';
+var base = 'http://biwatech.com/Eurajoki';
 var config;
 
 function config() {
